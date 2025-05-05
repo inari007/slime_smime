@@ -1,0 +1,57 @@
+SLIME S/MIME
+
+Plugin to provide security via S/MIME 4.0 standard (RFC 8551).
+
+Plugin stores all data safely on the server therefore requires user
+to trust the server. This approach violates end-to-end principle but
+allows easier usage. 
+
+REQUIREMENTS
+------------
+- Roundcube version 1.6.0+
+- OpenSSL version 3+
+
+INSTALLATION
+------------
+
+1. Set configuration in config.inc.php.dist and preferably
+   create a new directory for storing the certificates.
+2. Ensure that directory for certificates is writable.  
+3. Rename it to config.inc.php.
+
+TODO
+----
+
+- Client side signing (selectable) -> enable not to store private keys on the server
+- Import certificate from a signature  
+- Certificate credibility levels when verifying certificates
+- Be able to select different imported certificate for encrypting/signing 
+- Import/Export/Deletion of multiple certificates at the same time
+- Changing password changes password hash (Somehow try to fix that)
+- Compression of the content before signing or encrypting (CompressionData)
+- Enable to secure PK in PKCS#12 with an additional layer via security phrase
+
+LICENSE DETAILS
+---------------
+
+MIT License
+
+Copyright (c) 2025 Zdenek Dobes
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

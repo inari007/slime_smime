@@ -1,0 +1,71 @@
+<roundcube:include file="includes/layout.html" />
+<roundcube:include file="includes/menu.html" />
+<roundcube:include file="includes/settings-menu.html" />
+
+<h1 class="voice"><roundcube:label name="settings" /> : <roundcube:label name="slime_smime.smime" /></h1>
+
+<div id="layout-list" class="listbox selected" aria-labelledby="aria-label-slime_smime-list">
+	<div class="header">
+		<a class="button icon back-sidebar-button" href="#sidebar"><span class="inner"><roundcube:label name="slime_smime.settings" /></span>
+		</a>
+		<span id="aria-label-slime_smime-list" class="header-title"><roundcube:label name="slime_smime.smime" /></span>
+		<a class="button icon toolbar-menu-button" href="#list-menu">
+			<span class="inner"><roundcube:label name="menu" /></span>
+		</a>
+	</div>
+	<div class="scroller">
+
+        <table id="slime-smime-list" class="listing iconized settings-default-icon focus" role="listbox" data-list="slime_smime_list">
+			<tbody>
+            <tr class="settings focused slime_section_item" role="option" id="slime_options_button"><td class="section" tabindex="0"><roundcube:label name="slime_smime.settings" /></td></tr>
+			<tr class="certificates_title" role="option" id="slime_my_certificates_button"><td id="my_certificates_item" class="slime_smime_my_certificates_item custom-control custom-switch" tabindex="1"><roundcube:label name="slime_smime.myCerts" /></td></tr>
+        	</tbody>
+		</table>
+
+		<roundcube:object name="mycertslist" id="my_certs-table" class="listing hidden" role="treeitem" noheader="true"
+		data-list="mycertslist" data-label-msg="listempty" />
+
+        <table id="slime-smime-list" class="listing iconized settings-default-icon focus" role="listbox" data-list="slime_smime_list">
+			<tbody>
+            <tr class="certificates_title" role="option" id="slime_public_certificates_button"><td id="public_certificates_item" class="slime_smime_public_certificates_item custom-control custom-switch" tabindex="0"><roundcube:label name="slime_smime.pubCerts" /></td></tr>
+        	</tbody>
+		</table>
+        <roundcube:object name="othercertslist" id="other_certs-table" class="listing hidden" role="treeitem" noheader="true"
+		data-list="othercertslist" data-label-msg="listempty" />
+
+	</div>
+	<div class="pagenav menu footer small" role="toolbar" aria-label="<roundcube:label name="arialabellistnav" />">
+		<roundcube:button command="firstpage" type="link" class="firstpage disabled" classAct="firstpage"
+			title="firstpage" label="first" innerclass="inner" />
+		<roundcube:button command="previouspage" type="link" class="prevpage disabled" classAct="prevpage"
+			title="previouspage" label="previous" innerclass="inner" />
+		<span class="pagenav-text" aria-live="polite" aria-relevant="text">
+			<roundcube:object name="countdisplay" />
+		</span>
+		<roundcube:button command="nextpage" type="link" class="nextpage disabled" classAct="nextpage"
+			title="nextpage" label="next" innerclass="inner" />
+		<roundcube:button command="lastpage" type="link" class="lastpage disabled" classAct="lastpage"
+			title="lastpage" label="last" innerclass="inner" />
+	</div>
+</div>
+
+<div id="layout-content" role="main">
+	<h2 id="aria-label-toolbar" class="voice"><roundcube:label name="arialabeltoolbar" /></h2>
+	<div class="header" role="toolbar" aria-labelledby="aria-label-toolbar">
+		<a class="button icon back-list-button" href="#back"><span class="inner"><roundcube:label name="back" /></span></a>
+		<span class="header-title"></span>
+		<div id="folderstoolbar" class="toolbar menu">
+			<roundcube:button command="plugin.slime-cert-delete" type="link" class="delete disabled" classAct="delete"
+				label="delete" title="slime_smime.deletecerts" innerClass="inner" />
+			<roundcube:button command="plugin.slime-cert-import" type="link" class="import enabled" classAct="import"
+				label="import" title="slime_smime.importcerts" innerClass="inner" />
+            <roundcube:button command="plugin.slime-cert-export" type="link" class="export disabled" classAct="export"
+                label="export" title="slime_smime.exportcerts" innerclass="inner" />
+		</div>
+	</div>
+	<div class="iframe-wrapper">
+		<roundcube:object name="contentframe" id="keyframe" src="env:blankpage" />
+	</div>
+</div>
+
+<roundcube:include file="includes/footer.html" />

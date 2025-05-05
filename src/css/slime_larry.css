@@ -1,0 +1,294 @@
+/* Compose message section */
+
+.slime_button{
+    background: url("../images/larry/compose_icon.svg") !important;
+    background-position: 14px 0px !important;
+    background-repeat: no-repeat !important;
+}
+
+#slime_menu{
+    color: #ffffff;
+    padding: 2px 5px;
+}
+
+#slime_menu div.row{
+    display: table-row;
+}
+  
+#slime_menu div.row > label{
+    display: table-cell;
+    padding: 3px;
+}
+  
+#slime_menu div.row > div{
+    display: table-cell;
+    padding: 3px;
+}
+
+/* Receive a message */
+
+.slime_status{
+    background-repeat: no-repeat !important;
+    background-position: 8px center !important;
+    margin: 0;
+    margin-bottom: 5px;
+    padding: 6px 12px 6px 30px !important;
+    font-weight: 700;
+}
+
+.slime_confirm{
+    background-image: url("../images/larry/msg_confirm.svg");
+    background-color:#c9e6d3;
+    border: 1px solid #008a2e !important;
+    color: #008a2e;
+}
+
+.slime_warning{
+    background-image: url("../images/larry/msg_warning.svg");
+    background-color: #fef893;
+    border: 1px solid #ffdf0e !important;
+    color: #960;
+}
+
+.slime_error{
+    background-image: url("../images/larry/msg_error.svg");
+    background-color: #f2cccd;
+    border: 1px solid #c00005 !important;
+    color: #c00005;
+}
+
+.slime_attachment{
+    background-repeat: no-repeat !important;
+    background-position: 8px center !important;
+    background-image: url("../images/larry/public_certificates.svg") !important;
+    margin-left: 5px;
+    padding-left: 40px;
+    padding-right: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    width: calc(100% - 65px);
+    background: #f9f9f9;
+    border: 1px solid #d3d3d3;
+    border-radius: 4px;
+}
+
+/* S/MIME Menu item in settings */
+
+.smime_section{
+    background-image: none !important;
+    margin-left: -13px;
+    padding-top: 0px !important;
+    height: 30px !important;
+}
+
+.smime_section:only-child{
+    margin-top: -2px;
+    align-items: center;
+}
+
+.smime_section:only-child::before{
+    position: relative;
+    top: 6px;
+    margin-right: 10px;
+    margin-left: 1px;
+    content: url("../images/larry/slime_section.svg") !important;
+}
+
+.smime_section.selected > .smime_section::before{
+    content: url("../images/larry/slime_section_selected.svg") !important;
+}
+
+/* S/MIME Section */
+
+.slime_mainscreen #settings-sections,
+.slime_mainscreen #settings-right{
+  top: 44px;
+}
+
+.toolbar{
+    position: absolute;
+    top: -6px;
+    left: 0;
+    height: 40px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.slime_delete{
+    background: url("../images/larry/settings_delete.svg") !important;
+    background-repeat: no-repeat !important;
+    background-position: center -2px !important;
+    margin-left: 4px !important;
+    margin-right: 0px !important;
+}
+
+.slime_import{
+    background: url("../images/larry/settings_import.svg") !important;
+    background-repeat: no-repeat !important;
+    background-position: center -2px !important;
+    margin: 0px !important;
+}
+
+.slime_export{
+    background: url("../images/larry/settings_export.svg") !important;
+    background-repeat: no-repeat !important;
+    background-position: center -2px !important;
+    margin: 0px !important;
+    min-width: 50px !important;
+}
+
+.slime_mainscreen{
+    position: absolute;
+    top: 88px;
+    left: 10px;
+    right: 10px;
+    bottom: 20px;
+}
+
+.slime_content{
+    position: absolute;
+    top: 0;
+    left: 272px;
+    right: 0;
+    bottom: 0;
+}
+
+.slime_footer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    height: 32px !important;
+}
+
+.slime_countdisplay{
+    top: 0px !important;
+}
+
+.slimecertslist{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 260px;
+}
+
+.slime_section_item{
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.slime_options_button_text{
+    display: flex !important;
+    width: calc(260px - 1.18em - 5px) !important;
+    padding-top: 6px !important;
+    padding-bottom: 7px !important;
+    padding-left: 14px !important;
+}
+
+.slime_options_button_text::before{
+    content: url("../images/larry/settings.svg") !important;
+    display: flex;
+    float: left;
+    margin-top: -5px;
+    margin-right: 20px;
+    width: 1.18em;
+    height: 1em;
+    text-align: center;
+}
+
+#slime-smime-list{
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0;
+    border-collapse: unset;
+}
+
+.certificates_title{
+    display: flex;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.certificates_title::before{
+    content: url("../images/larry/arrow_closed.svg") !important;
+    display: flex;
+    float: left;
+    margin-top: 5px;
+    margin-right: 15px;
+    padding-left: 6px;
+    width: 20px;
+    height: 1em;
+    text-align: center;
+    padding-bottom: 11px !important;
+    border-bottom: 1px solid #bbd3da;
+    speak: none;
+    pointer-events: none;
+}
+
+.certificates_title_expanded::before{
+    content: url("../images/larry/arrow_opened.svg") !important;
+    margin-right: 18px;
+    padding-left: 3px;
+    margin-top: 6px;
+    padding-bottom: 10px !important;
+}
+
+.slime_smime_my_certificates_item{
+    padding-left: 20px !important;
+    width: 260px !important;
+    padding-top: 9px !important;
+    padding-bottom: 4px !important;
+    padding-left: 38px !important;
+    margin-left: -30px !important;
+}
+
+.slime_smime_my_certificates_item::before{
+    content: url("../images/larry/my_certificates.svg") !important;
+    display: flex;
+    transform: scale(0.85);
+    height: 0px;
+    padding-bottom: 4px;
+    margin-top: -8px;
+    margin-left: -45px !important;
+}
+
+.slime_smime_public_certificates_item{
+    padding-left: 20px !important;
+    width: 260px !important;
+    padding-top: 9px !important;
+    padding-bottom: 4px !important;
+    padding-left: 38px !important;
+    margin-left: -30px !important;
+}
+
+.slime_smime_public_certificates_item::before{
+    content: url("../images/larry/public_certificates.svg") !important;
+    display: flex;
+    transform: scale(0.85);
+    height: 0px;
+    padding-bottom: 4px;
+    margin-top: -8px;
+    margin-left: -45px !important;
+}
+
+.hidden{
+    display: none !important;
+}
+
+/* Certificate information */
+
+.slime_cert_info > fieldset{
+    margin-bottom: 8px !important;
+}
+
+.slime_cert_info{
+    margin-left: 10px !important;
+    width: calc(100% - 20px) !important;
+}

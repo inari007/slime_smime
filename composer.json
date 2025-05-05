@@ -1,0 +1,17 @@
+{
+	"name": "roundcube/slime_smime",
+	"type": "roundcube-plugin",
+    "description": "Server-side S/MIME Encryption for Roundcube",
+	"license" : "MIT",
+	"version" : "1.0",
+	"require": {
+		"php": ">=7.3.0"
+	},
+	"authors": [
+        {
+            "name": "Zdenek Dobes",
+            "email": "xdobes21@stud.fit.vutbr.cz",
+            "role": "Lead"
+        }
+    ]
+}

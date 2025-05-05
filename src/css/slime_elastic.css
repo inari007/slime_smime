@@ -1,0 +1,160 @@
+
+/* Compose message section */
+
+.smime_sidebar_first_row{
+    margin-top: 10px;
+    margin-bottom: -4px;
+}
+
+.smime_sidebar_last_row{
+    margin-bottom: 15px;
+}
+
+/* Receive message */
+
+.ui.alert.slime_attachment>i.icon:before{
+    content: url("../images/elastic/public_certificates.svg");
+    transform: scale(1.15);
+}
+
+/* S/MIME Menu item in settings */
+
+.smime_section:only-child::before {
+    position: relative;
+    top: 4px;
+    transform: scale(1.15);
+}
+
+.smime_section_dark:only-child::before {
+    content: url("../images/elastic/slime_section.svg");
+}
+
+.smime_section_light:only-child::before {
+    content: url("../images/elastic/slime_section_light.svg");
+}
+
+@media screen and (max-width: 1025px){
+    .smime_section:only-child::before{
+        top: 2px;
+    }
+}
+
+/* S/MIME Section */
+
+.slime_section_item{
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.certificates_title{
+    display: flex;
+    -webkit-user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.certificates_title_light{
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.certificates_title_dark{
+    border-bottom: 1px solid #2c373a;
+}
+
+.certificates_title::before{
+    content: "\f105";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: left;
+    height: 35px !important;
+    margin-right: -7px;
+    margin-left:4px;
+    width: 1.18em;
+    height: 1em;
+    font-family: Icons;
+    font-style: normal;
+    font-weight: 900;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    pointer-events: none;
+}
+
+.certificates_title_expanded::before{
+    content: "\f107";
+}
+
+.slime_smime_my_certificates_item{
+    border-bottom: none !important;
+}
+
+.slime_smime_public_certificates_item{
+    border-bottom: none !important;
+}
+
+.slime_smime_my_certificates_item::before{
+    position: relative;
+    top: 6px;
+    transform: scale(.9);
+}
+
+.slime_smime_my_certificates_item_dark::before{
+    content: url("../images/elastic/my_certificates.svg") !important;
+}
+
+.slime_smime_my_certificates_item_light::before{
+    content: url("../images/elastic/my_certificates_light.svg") !important;
+}
+
+.slime_smime_public_certificates_item::before{
+    position: relative;
+    top: 6px;
+    transform: scale(.9);
+}
+
+.slime_smime_public_certificates_item_dark::before{
+    content: url("../images/elastic/public_certificates.svg") !important;
+}
+
+.slime_smime_public_certificates_item_light::before{
+    content: url("../images/elastic/public_certificates_light.svg") !important;
+}
+
+/* S/MIME Options */
+
+.slime_collapse{
+    position: relative;
+    overflow: hidden;
+    transition: height .35s ease;
+}
+
+.slime_options_title{
+    display: flex;
+    align-items: center;
+    flex: 0 0 33.333333% !important;
+    max-width: 33.333333% !important;
+}
+
+.slime_options_select{
+    padding: .375rem 1.75rem .375rem .75rem !important;
+    margin-left: 25%;
+    flex: 0 0 75% !important;
+    max-width: 75% !important;
+}
+
+/* Certificates */
+
+.listing-info{
+    display: none;
+}
+
+.certItem{
+    padding-left: 15px !important;
+    display: flex;
+}

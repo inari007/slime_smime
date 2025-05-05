@@ -1,0 +1,70 @@
+
+<roundcube:object name="doctype" value="html5" />
+<html>
+<head>
+<roundcube:include file="/includes/links.html" />
+</head>
+<roundcube:if condition="env:extwin" /><body class="noscroll extwin"><roundcube:else /><body class="noscroll"><roundcube:endif />
+
+<roundcube:include file="/includes/header.html" />
+
+<div class="slime_mainscreen">
+    <h1 class="voice"><roundcube:label name="settings" /> : <roundcube:label name="slime_smime.smime" /></h1>
+    <h2 id="aria-label-toolbar" class="voice"><roundcube:label name="arialabeltoolbar" /></h2>
+    <div class="toolbar" role="toolbar" aria-labelledby="aria-label-toolbar">
+        <roundcube:button command="plugin.slime-cert-delete" type="link" class="button delete disabled slime_delete" classAct="button delete slime_delete" classSel="button delete pressed slime_delete" label="delete" title="slime_smime.deletecerts" />
+        <roundcube:button command="plugin.slime-cert-import" type="link" class="button import disabled slime_import" classAct="button import slime_import" classSel="button import pressed slime_import" label="import" title="slime_smime.importcerts" />
+        <roundcube:button command="plugin.slime-cert-export" type="link" class="button export disabled slime_export" classAct="button export slime_export" classSel="button export pressed slime_export" label="export" title="slime_smime.exportcerts" />
+    </div>
+
+    <roundcube:include file="/includes/settingstabs.html" />
+
+    <div id="settings-right" role="main" aria-labelledby="aria-label-slimecertslist">
+        <div id="slimecertslist" class="uibox listbox slimecertslist" role="navigation" aria-labelledby="aria-label-slime_smime-list">
+            <div id="slimecertslist-header" class="boxtitle"><roundcube:label name="slime_smime.smime" /></div>
+            <div class="scroller withfooter">
+            
+                <table id="slime-smime-list" class="listing iconized settings-default-icon focus" role="listbox" data-list="slime_smime_list">
+                    <tbody>
+                    <tr class="settings focused slime_section_item" role="option" id="slime_options_button"><td class="section slime_options_button_text" tabindex="0"><roundcube:label name="slime_smime.settings" /></td></tr>
+                    <tr class="certificates_title" role="option" id="slime_my_certificates_button"><td id="my_certificates_item" class="slime_smime_my_certificates_item custom-control custom-switch" tabindex="1"><roundcube:label name="slime_smime.myCerts" /></td></tr>
+                    </tbody>
+                </table>
+        
+                <roundcube:object name="mycertslist" id="my_certs-table" class="listing hidden" role="treeitem" noheader="true"
+                data-list="mycertslist" data-label-msg="listempty"/>
+        
+                <table id="slime-smime-list" class="listing iconized settings-default-icon focus" role="listbox" data-list="slime_smime_list">
+                    <tbody>
+                    <tr class="certificates_title" role="option" id="slime_public_certificates_button"><td id="public_certificates_item" class="slime_smime_public_certificates_item custom-control custom-switch" tabindex="0"><roundcube:label name="slime_smime.pubCerts" /></td></tr>
+                    </tbody>
+                </table>
+                <roundcube:object name="othercertslist" id="other_certs-table" class="listing hidden" role="treeitem" noheader="true"
+                data-list="othercertslist" data-label-msg="listempty" />
+
+            </div>
+            <div class="boxpagenav">
+                <roundcube:button command="firstpage" type="link" class="icon firstpage disabled" classAct="icon firstpage" title="firstpage" label="first" />
+                <roundcube:button command="previouspage" type="link" class="icon prevpage disabled" classAct="icon prevpage" title="previouspage" label="previous" />
+                <roundcube:button command="nextpage" type="link" class="icon nextpage disabled" classAct="icon nextpage" title="nextpage" label="next" />
+                <roundcube:button command="lastpage" type="link" class="icon lastpage disabled" classAct="icon lastpage" title="lastpage" label="last" />
+            </div>
+            <div class="boxfooter slime_footer">
+                <span class="countdisplay slime_countdisplay" aria-live="polite" aria-relevant="text">
+                    <roundcube:object name="countdisplay" />
+                </span>
+            </div>
+        </div>
+
+        <div class="uibox slime_content">
+            <div class="iframebox">
+                <roundcube:object name="contentframe" id="keyframe" width="100%" height="100%" frameborder="0" src="env:blankpage" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<roundcube:include file="/includes/footer.html" />
+
+</body>
+</html>

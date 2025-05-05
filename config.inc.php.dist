@@ -1,0 +1,75 @@
+<?php
+
+/*******************/ 
+/* Plugin settings */
+/*******************/
+
+// Disables plugin functionality
+// When set to true, plugin works normally
+// When set to false, plugin functions are not loaded to any user
+$config['slime_plugin_enabled'] = true;
+
+
+/* Initial plugin settings */
+// Is is not recommended to change these properties after plugin has been initialized
+// If required so, then:
+// 1. disable plugin (slime_plugin_enabled = false)
+// 2. remove all the current certificate files and folders
+// 3. change properties below
+// 4. enable plugin
+
+// REQUIRED! Absolute path of certificate store for all users.
+// Must be writeable by PHP process
+// Must not not lead directly to the web server root folder (Roundcube doesn't like that)
+$config['slime_path_to_certs'] = '';
+
+// If string left empty, then the OpenSSL tries to use system store certificates
+// Used by CApath (OpenSSL identifies files by SHA-1 hash of the subject as filename)
+// Example of a such file: 607986c7.0 (607986c7 - hash, .0 - First certificate from this CA)
+$config['slime_path_to_trusted_certs'] = '';
+
+// Number of hash subdirectories used for storing the certificates
+// Value must be power of 2 (1, 2, 4, 8, 16, 32, 64, .., 1024 (limit))
+// Optimal number of subdirectories is approximately 100 users per subdirectory -> 3000 expected users -> 32 subdirectories
+$config['slime_numberOfSubdirectories'] = 4;
+
+
+/* Basic plugin settings */
+// Can be changed anytime
+
+// Number of certificates per page showed in S/MIME settings
+// Must be 0 < N <= 1000
+$config['slime_numberOfCertificates'] = 100;
+
+// Disable selection of symmetric algorithms that are no longer considered safe
+// When set to true, weak symmetric algorithms are no longer selectable in advanced options
+// When set to false, these algorithms are selectable with a warning
+$config['slime_disableUnsafeSymAlg'] = false;
+
+// Disable AuthEnvelopedData (AEAD Encryption) added in 2019 S/MIME 4.0
+// Few e-mail clients could still not integrated the changes -> possible risk
+// Includes aes_128_gcm, aes_192_gcm, aes_256_gcm, works like slime_disableUnsafeSymAlg
+$config['slime_disableAuthEnveloped'] = false;
+
+// List of supported symmetric algorithms by plugin
+// If you want to remove any either remove directly from the list or set it as weak and set $config['slime_disableUnsafeSymAlg'] = true
+// Possible values are: aes_128_cbc, aes_192_cbc, aes_256_cbc, aes_128_gcm, aes_192_gcm, aes_256_gcm, rc2_128 and 3des
+$config['slime_supported_sym_alg'] = ['aes_128_cbc', 'aes_192_cbc', 'aes_256_cbc', 'aes_128_gcm', 'aes_192_gcm', 'aes_256_gcm', 'rc2_128', '3des'];
+
+// List of symmetric algorithms that plugin considers weak
+// Should at least contain: rc2_128 and 3des 
+$config['slime_weak_sym_algorithms'] = ['rc2_128', '3des'];
+
+// Any potential security obstructions are forbidden
+// 1. Warnings are presented as errors
+// 2. An option 'Disable weak cipher warnings' is removed 
+// 3. Disables unsafe symmetric algorithms as if $config['slime_disableUnsafeSymAlg'] = true;
+// 4. Forbids removal of AuthEnvelopedData algorithms as if $config['slime_disableAuthEnveloped'] = false;
+// 5. Makes AuthEnvelopedData mandatory (removes aes_xxx_cbc -> (EFAIL CBC vulnerability))
+$config['slime_strictPolicy'] = false;
+
+// Content-Type: application/x-pkcs7-mime is a legacy content-type to newer prefered application/pkcs7-mime
+// Many clients still require to use the legacy one. Setting to false ensures all sent messages are decrypted properly.
+// When set to true, all encrypted messages will use newer application/pkcs7-mime
+// When set to false, all encrypted messages will use legacy application/x-pkcs7-mime
+$config['slime_useNewerPKCS7CType'] = false;
