@@ -213,4 +213,14 @@ class slime_receive_msg {
         $pattern = '/smime-type="signed-data"|Content-Type:\s*multipart\/signed;/i';
         return preg_match($pattern, $content, $matches);
       }
+
+    /**
+     * Checks if message includes HTML content
+     * 
+     * @return bool True if message includes HTML content
+     */
+
+      function isHTMLMessage($content){
+        return strpos($content, "\r\nContent-Type: text/html"); 
+      }
 }

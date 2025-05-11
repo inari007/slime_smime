@@ -558,6 +558,34 @@ class slime_settings {
     }
 
     /**
+     * Searches all certificate files and checks if any contains an email in Subject Alternative Name
+     * 
+     * @param string $recipient E-mail of the recipient 
+     * 
+     * @return slime_smimeFile On success file with the certificate, on failure null 
+     */
+
+    function searchAlternativeNames($recipient){
+    $certDir = $this->getPathForUser();
+    $allCRTS = glob($certDir . "/*.crt", GLOB_BRACE);
+
+    foreach($allCRTS as $file){
+        $fileSlime = new slime_smimeFile($file, $this->slime, "application/x-x509-ca-cert");
+        $x509_cert = $fileSlime->getCertificate();
+        $cert = openssl_x509_parse($x509_cert);
+        $emails = $fileSlime->getSubjectAltEmails($cert);
+
+        foreach($emails as $email){
+            if($email == $recipient){
+                return $fileSlime;
+            }
+        }
+    }
+
+    return null;
+    }
+
+    /**
      * Returns list of the supported AuthEnvelopedData algorithms by plugin 
      * 
      * @return array Supported symmetric AuthEnvelopedData algorithms

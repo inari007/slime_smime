@@ -38,6 +38,7 @@
     public $certs = array();
     public $statusMsg = array();
 
+    const FILE_EMAIL_NOT_IN_CERT = 7;
     const FILE_INVALID_PKCS7 = 6;
     const FILE_WRONG_PEM_FORMAT = 5;
     const FILE_TYPE_NOT_SUPPORTED = 4;
@@ -51,6 +52,7 @@
     const MESSAGE_ENCRYPTED = 2;
     const MESSAGE_SIGNED = 1;
 
+    const MESSAGE_DECRYPTION_HTML = 64;
     const MESSAGE_DECRYPTION_WEAK = 32;
     const MESSAGE_NO_PK_ENCRYPTED = 16;
     const MESSAGE_DECRYPTION_FAILED = 8;
@@ -152,6 +154,9 @@
       
       // Get a private Key and certificate from PKCS#12 file
       $cert = $smimeFile->getCertificate();
+      if($cert == ""){
+        return $this->generateErrorWhenSending($args, 'send_error_cert_missing');
+      }
       $pk = $smimeFile->getPK();
       $extracerts = $smimeFile->getExtraCerts();
 
@@ -172,11 +177,7 @@
       // Signing message
       if($purpose['sign']){
 
-        // Catching errors
-        if($cert == ""){
-          return $this->generateErrorWhenSending($args, 'sign_error_cert');
-        }
-        else if($pk == ""){
+        if($pk == ""){
           return $this->generateErrorWhenSending($args, 'sign_error_pk');
         }
 
@@ -193,11 +194,6 @@
 
       // Encrypting message
       if($purpose['encrypt']){
-
-        // Catching errors
-        if($cert == ""){
-          return $this->generateErrorWhenSending($args, 'encrypt_error_cert');
-        }
 
         // Include sender as a recipient (so he can read the sent message)
         $certs = array($cert);
@@ -222,7 +218,13 @@
 
           // If any certificate of the recipient doesn't exist
           if($certRec == ""){
-            return $this->generateErrorWhenSending($args, 'encrypt_error_cert_rec', ['recipient' => $recipient]);
+            
+            // Tries to search for the certificate as an Subject Alternative Name in X.509 extension
+            $smimeFileRec = $this->settings->searchAlternativeNames($recipient);
+            if($smimeFileRec == null){
+              return $this->generateErrorWhenSending($args, 'encrypt_error_cert_rec', ['recipient' => $recipient]);
+            }
+            $certRec = $smimeFileRec->getCertificate();
           }
 
           // Checks if recipient has a valid certificate
@@ -248,11 +250,6 @@
 
       // Distributing certificates (Sends certificate path)
       if($purpose['attach']){
-        
-        // Catching errors
-        if($cert == ""){
-          return $this->generateErrorWhenSending($args, 'distribute_error_cert');
-        }
 
         // Order and format certificates 
         $allCerts = array($extracerts);
@@ -366,7 +363,7 @@
             }
 
             // Caches the certificate(its ID) in case user clicks the import button
-            // (handled by template_object_messagebody hook)   
+            // (Handled by template_object_messagebody hook)   
             array_push($this->certs, $attachment->mime_id);
           }
         }
@@ -380,14 +377,19 @@
 
         // Decrypts message
         $messageInfo = $engine->decryptMessage($messageObj, $purpose['encryptAuth']);
+        if($this->isBitSet($messageInfo['status'], self::MESSAGE_DECRYPTION_HTML)){
+          array_push($this->statusMsg, self::MESSAGE_DECRYPTION_HTML);
+        }
+
         if($this->isBitSet($messageInfo['status'], self::MESSAGE_DECRYPTION_SUCCESSFULLY)){
           array_push($this->statusMsg, self::MESSAGE_DECRYPTION_SUCCESSFULLY);
-        } 
+        }
         else if($this->isBitSet($messageInfo['status'], self::MESSAGE_DECRYPTION_FAILED)){
           array_push($this->statusMsg, self::MESSAGE_DECRYPTION_FAILED);
           $args['object']->body = $messageInfo['content'];
           return $args;
         }
+        
         if($this->isBitSet($messageInfo['status'], self::MESSAGE_DECRYPTION_WEAK)){
           array_push($this->statusMsg, self::MESSAGE_DECRYPTION_WEAK);
         }

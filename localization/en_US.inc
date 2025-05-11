@@ -1,6 +1,4 @@
 <?php
-// If date formating for other languages is not working properly
-// it is neccesary to 
 
 // Send a message 
 $labels = [];
@@ -10,21 +8,19 @@ $labels['sign'] = 'Digitally sign this message';
 $labels['encrypt'] = 'Encrypt this message';
 $labels['distribute'] = 'Attach my certificate';
 
+$labels['send_error_cert_missing'] = 'Encryption failed! Sender certificate was not found!';
 $labels['send_error_cert_invalid'] = 'Sending failed! Used certificate is invalid!';
 
 $labels['sign_error_pkcs'] = 'Signing failed! Unable to find a PKCS#12 file!';
 $labels['sign_error_pk'] = 'Signing failed! Unable to find a private key!';
-$labels['sign_error_cert'] = 'Signing failed! Unable to find a certificate!';
 $labels['sign_error'] = 'Signing failed! Undefined error!';
 
 $labels['encrypt_error_efail'] = 'Encrypting HTML content is not safe!';
-$labels['encrypt_error_cert'] = 'Encryption failed! Unable to find certificate your certificate!';
 $labels['encrypt_error_cert_rec'] = 'Encryption failed! Unable to find a certificate of the recipient $recipient!';
 $labels['encrypt_error_recipient_cert_invalid'] = 'Encryption failed! Recipient $recipient has an invalid certificate!';
 $labels['encrypt_error'] = 'Encryption failed! Undefined error!';
 
 $labels['distribute_error_pkcs'] = 'Attaching certificate failed! Unable to find a PKCS#12 file!';
-$labels['distribute_error_cert'] = 'Attaching certificate failed! Unable to find a certificate!';
 
 // Receive a message
 
@@ -37,6 +33,7 @@ $messages['sig_invalid'] = 'Invalid signature!';
 $messages['dec_success'] = 'Message decrypted successfully!';
 $messages['dec_failed'] = 'Message decryption failed!';
 $messages['dec_no_pkcs'] = 'Message decryption failed! PKCS#12 file was not found!';
+$messages['dec_html_content'] = 'Message decryption failed! Decrypting HTML content is forbidden!';
 $messages['dec_weak_alg'] = 'Weak symmetric algorithm was used! Proceed with caution!';
 
 // S/MIME settings
@@ -105,6 +102,7 @@ $labels['certificate_protected_title'] = 'Enter a password';
 $labels['certificate_protected'] = 'The certificate is protected by a password. Please enter the password to import it.';
 $labels['import_file_not_supported'] = 'This file type is not supported!';
 $labels['import_file_no_pem'] = 'Certificate is not in PEM format!';
+$labels['import_email_not_present'] = 'Certificate does not contain an e-mail!';
 
 $labels['import_info'] = 'All certificates are stored safely on the server.';
 $labels['import_description'] = 'You can import PKCS#12 files or public certificates in PEM format.';

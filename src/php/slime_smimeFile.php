@@ -199,8 +199,16 @@ class slime_smimeFile{
             }
         }
 
-        // Get E-mail of the owner
-        $rawUsername = $cert['subject']['CN'];
+        // Get e-mail of the owner
+        $rawUsername = $this->getEmailFromCert($cert);
+
+        // Certificates without e-mail are pointless to keep
+        if(!$rawUsername){
+            $result['status'] = slime_smime::FILE_EMAIL_NOT_IN_CERT;
+            return $result;
+        }
+
+        // Code e-mail into format that is file system safe
         $codedUsername = $this->slime->settings->emailToFolderName($rawUsername);
 
         // Saves as pkcs#12
@@ -299,6 +307,40 @@ class slime_smimeFile{
     }
 
     /**
+     * Returns all emails contained in Subject Alternative Name attribute of X.509 extension
+     * 
+     * @param array $cert Imported certificate by openssl_x509_parse() function
+     * 
+     * @return array E-mails present in Subject Alternative Name
+     */
+
+    function getSubjectAltEmails($cert){
+        if($cert['extensions']['subjectAltName']){
+            preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $cert['extensions']['subjectAltName'], $matches);
+            return $matches[0];
+        }
+        return [];
+    }
+
+    /**
+     * Returns first value from certificate subject that matches e-mail format 
+     * 
+     * @param array $cert Imported certificate by openssl_x509_parse() function
+     * 
+     * @return string|bool E-mail or false if any e-mail address is present
+     */
+
+    function getEmailFromCert($cert){
+        $possibleEmails = array_merge($cert['subject'], $this->getSubjectAltEmails($cert));
+        foreach($possibleEmails as $email){
+            if(filter_var($email, FILTER_VALIDATE_EMAIL)){
+                return $email;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if logged user is an owner of the certificate 
      * 
      * @param array $cert Imported certificate by openssl_x509_parse() function
@@ -308,10 +350,11 @@ class slime_smimeFile{
 
     function isUserOwner($cert){
         $user_identities = $this->slime->settings->identities;
+        $possibleEmails = array_merge($cert['subject'], $this->getSubjectAltEmails($cert));
 
-        foreach ($user_identities as $identity) {
-            foreach ($cert['subject'] as $identity_cert) {
-                if ($identity['email'] == $identity_cert) {
+        foreach($possibleEmails as $email){
+            foreach($user_identities as $identity){
+                if($identity['email'] == $email){
                     return true;
                 }
             }
@@ -627,6 +670,8 @@ class slime_smimeFile{
 
         return $x509_cert;
     }
+
+
 
     /**
      * Get private key from the file

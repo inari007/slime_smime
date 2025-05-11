@@ -1,6 +1,6 @@
 <?php
 
-// Odeslat zpravu
+// Odeslat zprávu
 $labels = [];
 $labels['smime'] = 'S/MIME';
 $labels['smime_hover'] = 'Odesílání zpráv S/MIME';
@@ -8,21 +8,19 @@ $labels['sign'] = 'Digitálně podepsat tuto zprávu';
 $labels['encrypt'] = 'Zašifrovat tuto zprávu';
 $labels['distribute'] = 'Připojit můj certifikát';
 
+$labels['send_error_cert_missing'] = 'Odesílání selhalo! Certifikát odesílatele nebyl nalezen!';
 $labels['send_error_cert_invalid'] = 'Odesílání selhalo! Použitý certifikát je neplatný!';
 
 $labels['sign_error_pkcs'] = 'Podepisování selhalo! Nepodařilo se najít PKCS#12 soubor!';
 $labels['sign_error_pk'] = 'Podepisování selhalo! Nepodařilo se najít soukromý klíč!';
-$labels['sign_error_cert'] = 'Podepisování selhalo! Nepodařilo se najít certifikát!';
 $labels['sign_error'] = 'Podepisování selhalo! Nedefinovaná chyba!';
 
 $labels['encrypt_error_efail'] = 'Šifrování HTML obsahu není bezpečné!';
-$labels['encrypt_error_cert'] = 'Šifrování selhalo! Nepodařilo se najít certifikát odesílatele!';
 $labels['encrypt_error_cert_rec'] = 'Šifrování selhalo! Nepodařilo se najít certifikát příjemce $recipient!';
 $labels['encrypt_error_recipient_cert_invalid'] = 'Šifrování selhalo! Příjemce $recipient má neplatný certifikát!';
 $labels['encrypt_error'] = 'Šifrování selhalo! Nedefinovaná chyba!';
 
 $labels['distribute_error_pkcs'] = 'Připojení certifikátu selhalo! Nepodařilo se najít PKCS#12 soubor!';
-$labels['distribute_error_cert'] = 'Připojení certifikátu selhalo! Nepodařilo se najít certifikát!';
 
 // Obdržet zprávu
 $labels['cert_found'] = 'Tato zpráva obsahuje přiložený digitální certifikát';
@@ -34,6 +32,7 @@ $messages['sig_invalid'] = 'Neplatný elektronický podpis!';
 $messages['dec_success'] = 'Zpráva byla úspěšně dešifrována!';
 $messages['dec_failed'] = 'Dešifrování zprávy selhalo!';
 $messages['dec_no_pkcs'] = 'Dešifrování zprávy selhalo! Soubor PKCS#12 nebyl nalezen!';
+$messages['dec_html_content'] = 'Dešifrování zprávy selhalo! Dešifrování obsahu HTML je zakázáno!';
 $messages['dec_weak_alg'] = 'Zpráva byla zašifrována slabým symetrickým algoritmem! Postupujte s obezřetností!';
 
 // S/MIME sekce
@@ -102,6 +101,7 @@ $labels['certificate_protected_title'] = 'Zadejte heslo';
 $labels['certificate_protected'] = 'Tento certifikát je chráněn heslem. Zadejte ho pro úspěšné importování.';
 $labels['import_file_not_supported'] = 'Tento typ soubor není podporován!';
 $labels['import_file_no_pem'] = 'Certifikát není v PEM formátu!';
+$labels['import_email_not_present'] = 'Certifikát neobsahuje žádný e-mail!';
 
 $labels['import_info'] = 'Všechny certifikáty jsou bezpečně ukládány na serveru.';
 $labels['import_description'] = 'Můžete vkládat soubory PKCS#12 či veřejné certifikáty ve formátu PEM.';

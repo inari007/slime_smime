@@ -47,7 +47,7 @@ class slime_ui{
         else{
             $this->slime->include_stylesheet("src/css/slime_larry.css");
         }
-        $this->slime->include_script('src/js/min_slime_smime.js');
+        $this->slime->include_script('src/js/slime_smime.js');
 
         // Handler for all setting actions 
         $this->slime->add_hook('settings_actions', array($this, 'settings_actions'));
@@ -198,6 +198,10 @@ class slime_ui{
                 $attributes['class'] = 'boxerror slime_status slime_error encrypted';
                 $msg = rcube::Q($this->slime->gettext('dec_no_pkcs'));
             }
+            else if($status == slime_smime::MESSAGE_DECRYPTION_HTML){
+                $attributes['class'] = 'boxerror slime_status slime_error encrypted';
+                $msg = rcube::Q($this->slime->gettext('dec_html_content'));
+            }
             else if($status == slime_smime::MESSAGE_DECRYPTION_WEAK){
                 $attributes['class'] = $this->slime->settings->isInStrictMode() ? 'boxerror slime_status slime_error encrypted' : 'boxwarning slime_status slime_warning encrypted';
                 $msg = rcube::Q($this->slime->gettext('dec_weak_alg'));
@@ -310,6 +314,10 @@ class slime_ui{
                     $this->slime->rc->output->command('parent.slime_certificate_password', [
                         "type" => "import",
                     ]);
+                    break;
+
+                case slime_smime::FILE_EMAIL_NOT_IN_CERT:
+                    $this->slime->rc->output->show_message('slime_smime.import_email_not_present', 'error');
                     break;
 
                 case slime_smime::FILE_INVALID_PKCS7:
@@ -599,8 +607,6 @@ class slime_ui{
             $out = $this->slime->rc->table_output($args, [],  array('name'), 'id');
         }
 
-        $out = rcmail_action::table_output($args, [], array('name'), 'id');
-
         $this->slime->rc->output->add_gui_object('mycertslist', $args['id']);
         $this->slime->rc->output->include_script('list.js');
 
@@ -617,7 +623,12 @@ class slime_ui{
      */ 
 
     function slime_other_certificates($args){
-        $out = rcmail_action::table_output($args, [], array('name'), 'id');
+        if(RCMAIL_VERSION > '1.6'){
+            $out = rcmail_action::table_output($args, [], array('name'), 'id');
+        }
+        else{
+            $out = $this->slime->rc->table_output($args, [],  array('name'), 'id');
+        }
 
         $this->slime->rc->output->add_gui_object('othercertslist', $args['id']);
         $this->slime->rc->output->include_script('list.js');

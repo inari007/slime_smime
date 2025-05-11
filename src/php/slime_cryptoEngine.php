@@ -213,7 +213,7 @@ class slime_cryptoEngine {
         if(in_array($alg, $this->slime->settings->weakAlgs) && $this->slime->settings->disableWeakAlg){
             
             // Use default
-            $alg = 'aes_256_cbc';
+            $alg = 'aes_128_cbc';
         }
 
         // AuthEnvelopedData keeps string vals for CLI 'openssl cms -encrypt'
@@ -223,7 +223,7 @@ class slime_cryptoEngine {
             if($this->slime->settings->disableAuthEnveloped){
 
                 // Use default
-                $alg = 'aes_256_cbc';
+                $alg = 'aes_128_cbc';
             }
             else{
                 return $alg;
@@ -249,7 +249,7 @@ class slime_cryptoEngine {
                 return OPENSSL_CIPHER_3DES;
 
             default:
-                return OPENSSL_CIPHER_AES_256_CBC;
+                return OPENSSL_CIPHER_AES_128_CBC;
             
         }
     }
@@ -398,6 +398,14 @@ class slime_cryptoEngine {
 
             if($success){
 
+                $decryptedContent = $outputFile->getContent();
+
+                // Rendering decrypted HTML content is forbidded due to EFAIL
+                if($message->isHTMLMessage($decryptedContent)){
+                    $messageInfo['status'] = slime_smime::MESSAGE_DECRYPTION_HTML;
+                    break;
+                }
+
                 $messageInfo['status'] = slime_smime::MESSAGE_DECRYPTION_SUCCESSFULLY;
                 $preferences = $this->slime->settings->getSettings();
 
@@ -422,16 +430,19 @@ class slime_cryptoEngine {
 
                     }
                 }
-                $messageInfo['content'] = $outputFile->getContent();
+                $messageInfo['content'] = $decryptedContent;
                 break;
             }
         }
 
         // If message was not decrypted
-        if(isset($messageInfo['status']) == false){
-
+        if(!isset($messageInfo['status'])){
             $messageInfo['status'] = slime_smime::MESSAGE_DECRYPTION_FAILED;
+        }
 
+        // If decryption failed
+        if($messageInfo['status'] == slime_smime::MESSAGE_DECRYPTION_FAILED || $messageInfo['status'] == slime_smime::MESSAGE_DECRYPTION_HTML){
+            
             // Returns enrypted content in PEM format
             $messageInfo['content'] = $message->getEncryptedContent();
         }

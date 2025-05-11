@@ -19,10 +19,19 @@ INSTALLATION
 2. Ensure that directory for certificates is writable.  
 3. Rename it to config.inc.php.
 
+FUNCTIONALITY
+------------
+
+- Encrypting via CMS EnvelopedData and AuthEnvelopedData, 
+- Signing via Content-type: multipart/signed
+- Additional way of distributing certificates via attachments
+- Hierarchical certificate store 
+- Real-time certificate validation with each import/composed message/viewed message
+- Supports both deprecated and modern symmetric algorithms (deprecated can be turned off)
+
 TODO
 ----
 
-- Client side signing (selectable) -> enable not to store private keys on the server
 - Import certificate from a signature  
 - Certificate credibility levels when verifying certificates
 - Be able to select different imported certificate for encrypting/signing 
@@ -30,6 +39,8 @@ TODO
 - Changing password changes password hash (Somehow try to fix that)
 - Compression of the content before signing or encrypting (CompressionData)
 - Enable to secure PK in PKCS#12 with an additional layer via security phrase
+- Check if subject of certificate matches the sender of an e-mail
+- Client side signing (selectable) -> enable not to store private keys on the server
 
 LICENSE DETAILS
 ---------------
