@@ -52,11 +52,15 @@
     const MESSAGE_ENCRYPTED = 2;
     const MESSAGE_SIGNED = 1;
 
-    const MESSAGE_DECRYPTION_HTML = 64;
-    const MESSAGE_DECRYPTION_WEAK = 32;
-    const MESSAGE_NO_PK_ENCRYPTED = 16;
-    const MESSAGE_DECRYPTION_FAILED = 8;
-    const MESSAGE_DECRYPTION_SUCCESSFULLY = 4;
+    const MESSAGE_SIGNATURE_CLASS_3 = 1024;
+    const MESSAGE_SIGNATURE_CLASS_2 = 512;
+    const MESSAGE_SIGNATURE_CLASS_1 = 256;
+    const MESSAGE_DECRYPTION_HTML = 128;
+    const MESSAGE_DECRYPTION_WEAK = 64;
+    const MESSAGE_NO_PK_ENCRYPTED = 32;
+    const MESSAGE_DECRYPTION_FAILED = 16;
+    const MESSAGE_DECRYPTION_SUCCESSFULLY = 8;
+    const MESSAGE_SIGNATURE_WRONG_SUBJECT = 4;
     const MESSAGE_SIGNATURE_NOT_VERIFIED = 2;
     const MESSAGE_SIGNATURE_VERIFIED = 1;
 
@@ -66,9 +70,11 @@
     function init(){
       $this->rc = rcube::get_instance();
 
-      /*$file = fopen("C:/wamp/www/roundcubemail-1.6.9/plugins/slime_smime/tmp/ee.txt", 'w');
+      /*
+      $file = fopen("C:/wamp/www/roundcubemail-1.6.9/plugins/slime_smime/tmp/ee.txt", 'w');
       fwrite($file, print_r($this->message->headers->structure, true));
-      fclose($file);*/
+      fclose($file);
+      */
 
       $this->load_config('config.inc.php');
       $this->settings = new slime_settings($this);
@@ -134,7 +140,7 @@
       }
 
       // Get senders PKCS#12 file
-      $pkcsPath = $this->settings->getExistingPKCS12();
+      $pkcsPath = $this->settings->getExistingPKCS12CurrentIdentity($args['from']);
 
       // If user do not have a PKCS#12 file
       if($pkcsPath == ""){
@@ -182,7 +188,7 @@
         }
 
         // Adds a signature
-        $newMessage = $engine->signMessage($message);
+        $newMessage = $engine->signMessage($message, $args['from']);
         if($newMessage == ""){
           return $this->generateErrorWhenSending($args, 'sign_error');
         }
@@ -197,7 +203,7 @@
 
         // Include sender as a recipient (so he can read the sent message)
         $certs = array($cert);
-        $recipients = $message->getAllRecipients($this);
+        $recipients = $message->getAllRecipients();
 
         // Gets certificates of all the recipients
         foreach($recipients as $recipient){
@@ -205,7 +211,7 @@
 
           // Checks if recipient is not a sender (otherwise redundant certificates)
           foreach($this->settings->identities as $identity){
-            if($this->settings->emailToFolderName($identity['email']) . ".crt" == $recipient){
+            if($identity == $recipient){
               $notInclude = true;
             }
           }
@@ -298,10 +304,11 @@
 
     function processReceivedMessage($args){
 
-      $options = $this->settings->getSettings();
+      // Get user settings
+      $preferences = $this->settings->getSettings();
 
       // If plugin is turned off
-      if(!$options['slime_enable']){
+      if(!$preferences['slime_enable']){
         return $args;
       }
 
@@ -346,29 +353,6 @@
         $engine = new slime_cryptoEngine($this, $cert, $pk, $extracerts);
       }
 
-      // Attached certificates
-      if($purpose['attach']){
-        $this->certs = array();
-
-        // Checks all the attachments
-        foreach((array) $message->attachments as $attachment){
-
-          if($engine->isAttachmentCertificate($attachment)){
-            $this->rc->output->set_env('uid', $message->uid);
-
-            // Automatically import a certificate if set in settings
-            $preferences = $this->settings->getSettings();
-            if($preferences['slime_import_all']){
-              $this->ui->import_attachment($message->uid, $attachment->mime_id, $message);
-            }
-
-            // Caches the certificate(its ID) in case user clicks the import button
-            // (Handled by template_object_messagebody hook)   
-            array_push($this->certs, $attachment->mime_id);
-          }
-        }
-      }
-
       // Encrypted message
       if($purpose['encrypt']){
 
@@ -407,8 +391,26 @@
         // Verify a signature
         $status = $engine->verifySignature($messageObj);
         if($this->isBitSet($status, self::MESSAGE_SIGNATURE_VERIFIED)){
+
+          // If certificate identities doesn't match sender (From) 
+          if($this->isBitSet($status, self::MESSAGE_SIGNATURE_WRONG_SUBJECT)){
+            array_push($this->statusMsg, self::MESSAGE_SIGNATURE_WRONG_SUBJECT);
+          }
+
           array_push($this->statusMsg, self::MESSAGE_SIGNATURE_VERIFIED);
-        } 
+
+          // If user wants to show a trust level 
+          if($this->isBitSet($status, self::MESSAGE_SIGNATURE_CLASS_1)){
+            array_push($this->statusMsg, self::MESSAGE_SIGNATURE_CLASS_1);
+          }
+          else if($this->isBitSet($status, self::MESSAGE_SIGNATURE_CLASS_2)){
+            array_push($this->statusMsg, self::MESSAGE_SIGNATURE_CLASS_2);
+          }
+          else if($this->isBitSet($status, self::MESSAGE_SIGNATURE_CLASS_3)){
+            array_push($this->statusMsg, self::MESSAGE_SIGNATURE_CLASS_3);
+          }
+
+        }
         else if($this->isBitSet($status, self::MESSAGE_SIGNATURE_NOT_VERIFIED)){
           array_push($this->statusMsg, self::MESSAGE_SIGNATURE_NOT_VERIFIED);
         }
@@ -429,6 +431,35 @@
           $attachment->mime_id = (string) ++$index;
           $args['object']->attachments[] = $attachment;
           $args['object']->mime_parts[] = $attachment;
+        }
+      }
+
+      // Initialize importable attachments/certificates
+      $this->certs = array();
+
+      // Attached certificates
+      if($purpose['attach'] || ($purpose['sign'] && $preferences['slime_import_signature'])){
+
+        // Checks all the attachments
+        foreach((array) $args['object']->attachments as $attachment){
+
+          // Checks if attachment is a attached certificate or a signature
+          $isAttachedCertificate = $engine->isAttachmentCertificate($attachment, ".p7c");
+          $isAttachedSignature = $engine->isAttachmentCertificate($attachment, ".p7s");
+          if($isAttachedCertificate || $isAttachedSignature){
+            $this->rc->output->set_env('uid', $message->uid);
+
+            // Automatically import a certificate if set in settings
+            if($preferences['slime_import_all']){
+              $this->ui->import_attachment($message->uid, $attachment->mime_id, $message, $isAttachedSignature);
+            }
+
+            // Caches the certificate(its ID) in case user clicks the import button
+            // (Handled by template_object_messagebody hook)
+            $attachmentItem['mimeID'] = $attachment->mime_id;
+            $attachmentItem['isSignature'] = $isAttachedSignature;
+            array_push($this->certs, $attachmentItem);
+          }
         }
       }
 

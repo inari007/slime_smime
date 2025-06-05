@@ -74,9 +74,9 @@ class slime_smimeFile{
     function createFile($password = ""){
 
         $out = array();
-        // .crt, .cer, .pem, text streams and PKCS#7 files (all in PEM format)
+        // .crt, .cer, .pem, PKCS#7 files and text streams (all in PEM format)
         if($this->type == "application/x-x509-ca-cert" || $this->type == "application/x-x509-user-cert" || $this->type == "application/x-pem-file" ||
-           $this->type == "application/octet-stream" || $this->type == "application/x-pkcs7-certificates"){
+           $this->type == "application/octet-stream" || $this->type == "application/x-pkcs7-certificates" || $this->type == "text/plain"){
           
             // PKCS#7 can include multiple certificates in 1 PEM
             if(preg_match_all('/-----BEGIN PKCS7-----(.*?)-----END PKCS7-----/s', $this->content, $matches)){
@@ -425,7 +425,7 @@ class slime_smimeFile{
         // Calls the verify command, puts output into $stdout and $stderr
         $out = $this->slime->settings->cliCommand($command);
         $stdout = $out['stdout'];
-        $stderr = $out['stderr'];  
+        $stderr = $out['stderr'];
 
         // Catching errors
         if(!$stdout){
@@ -524,7 +524,8 @@ class slime_smimeFile{
         // Gets used language so date can be formated properly
         $currentLanguage = $this->slime->rc->config->get('language');
 
-        $certificate = array("name" => $cert['subject']['CN'], 
+        $certificate = array("name" => $cert['subject']['CN'],
+        "altIdentities" => $this->getAlternativeIdentities($cert['subject']['CN'], $this->getSubjectAltEmails($cert)), 
         "serialNumber" => $cert['serialNumber'], 
         "validFrom" => $this->getCertificateTime($cert['validFrom_time_t'], $currentLanguage), 
         "validTo" => $this->getCertificateTime($cert['validTo_time_t'], $currentLanguage), 
@@ -536,6 +537,28 @@ class slime_smimeFile{
     );
 
         return $certificate;
+    }
+
+    /**
+     * Formats alternative identites for printing
+     * 
+     * @param string $subject Subject of the x509 certificate
+     * @param array $altIdentities Alternative identities from x509 certificate
+     * 
+     * @return string Printable alternative identities
+     */
+
+    function getAlternativeIdentities($subject, $altIdentities){
+
+        // Removes identity that matches subject name
+        foreach($altIdentities as $index => $identity){
+            if($subject == $identity){
+                unset($altIdentities[$index]);
+                break;
+            }
+        }
+
+        return implode(', ', $altIdentities);
     }
 
     /**

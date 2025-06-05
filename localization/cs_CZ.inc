@@ -8,10 +8,10 @@ $labels['sign'] = 'Digitálně podepsat tuto zprávu';
 $labels['encrypt'] = 'Zašifrovat tuto zprávu';
 $labels['distribute'] = 'Připojit můj certifikát';
 
-$labels['send_error_cert_missing'] = 'Odesílání selhalo! Certifikát odesílatele nebyl nalezen!';
+$labels['send_error_cert_missing'] = 'Odesílání selhalo! Nepodařilo se najít certifikát, který se shoduje s aktuální identitou!';
 $labels['send_error_cert_invalid'] = 'Odesílání selhalo! Použitý certifikát je neplatný!';
 
-$labels['sign_error_pkcs'] = 'Podepisování selhalo! Nepodařilo se najít PKCS#12 soubor!';
+$labels['sign_error_pkcs'] = 'Podepisování selhalo! Nepodařilo se najít PKCS#12 soubor, který se shoduje s aktuální identitou!';
 $labels['sign_error_pk'] = 'Podepisování selhalo! Nepodařilo se najít soukromý klíč!';
 $labels['sign_error'] = 'Podepisování selhalo! Nedefinovaná chyba!';
 
@@ -20,14 +20,18 @@ $labels['encrypt_error_cert_rec'] = 'Šifrování selhalo! Nepodařilo se najít
 $labels['encrypt_error_recipient_cert_invalid'] = 'Šifrování selhalo! Příjemce $recipient má neplatný certifikát!';
 $labels['encrypt_error'] = 'Šifrování selhalo! Nedefinovaná chyba!';
 
-$labels['distribute_error_pkcs'] = 'Připojení certifikátu selhalo! Nepodařilo se najít PKCS#12 soubor!';
+$labels['distribute_error_pkcs'] = 'Připojení certifikátu selhalo! Nepodařilo se najít PKCS#12 soubor, který se shoduje s aktuální identitou!';
 
 // Obdržet zprávu
 $labels['cert_found'] = 'Tato zpráva obsahuje přiložený digitální certifikát';
 $labels['cert_title'] = 'Importovat certifikát';
 
+$labels['sig_found'] = 'Elektronický podpis obsahuje digitální certifikát.';
+
 $messages['sig_valid'] = 'Ověřený elektronický podpis!';
 $messages['sig_invalid'] = 'Neplatný elektronický podpis!';
+$messages['sig_wrong_subject'] = 'Odesílatel zprávy není vlastníkem certifikátu uvnitř elektronického podpisu!';
+$messages['sig_trust_level'] = 'Úroveň věrohodnosti $trust_level!';
 
 $messages['dec_success'] = 'Zpráva byla úspěšně dešifrována!';
 $messages['dec_failed'] = 'Dešifrování zprávy selhalo!';
@@ -51,9 +55,11 @@ $labels['options_title_first'] = 'Hlavní nastavení';
 $labels['enable'] = 'Povolit S/MIME';
 $labels['encrypt_every'] = 'Šifrovat všechny zprávy (pokud možno)';
 $labels['sign_every'] = 'Podepsat všechny zprávy (pokud možno)';
+$labels['import_signature'] = 'Import certifikátů skrze elektronický podpis';
 $labels['import_every'] = 'Importovat všechny doručené certifikáty';
 
 $labels['options_title_second'] = 'Pokročilá nastavení';
+$labels['trust_levels'] = 'Zobrazovat úrovně důvěryhodnosti elektronických podpisů';
 $labels['disable_weak'] = 'Vypnout varování o slabých šifrách';
 
 $labels['encryption_algorithm'] = 'Šifrovací algoritmus';
@@ -73,6 +79,7 @@ $labels['save'] = 'Uložit';
 $labels['cert_title'] = 'Informace o certifikátu';
 $labels['certificate_title_first'] = 'Základní informace';
 $labels['subject_name'] = 'Název subjektu';
+$labels['alternative_identities'] = 'Alternativní identity';
 $labels['serial_number'] = 'Sériové číslo';
 $labels['valid_from'] = 'Platný od';
 $labels['expires_on'] = 'Platný do';
@@ -97,6 +104,7 @@ $labels['import_warning'] = '$error';
 $labels['import_password_error'] = 'Nesprávné heslo!';
 $labels['import_invalid_cert'] = 'Neplatný formát certifikátu!';
 $labels['import_invalid_pkcs7'] = 'Neplatný formát PKCS#7!';
+$labels['import_signature_failed'] = 'Nepovedlo se extrahovat certifikáty z elektronického podpisu!';
 $labels['certificate_protected_title'] = 'Zadejte heslo';
 $labels['certificate_protected'] = 'Tento certifikát je chráněn heslem. Zadejte ho pro úspěšné importování.';
 $labels['import_file_not_supported'] = 'Tento typ soubor není podporován!';

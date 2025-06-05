@@ -54,20 +54,19 @@ class slime_cryptoEngine {
      * Signs content of the message
      * 
      * @param slime_message $message Message object to be signed 
+     * @param string $subject Sender of the message
      * 
      * @return string Signed message 
      */
 
-    function signMessage($message){
+    function signMessage($message, $subject){
 
         // Moves content info from msg header to body so it could be signed
         $message->saveContentInfo();
         $message->prependContentInfoToContent();
         $message->removeContentInfoFromHeader();
-        
+
         // Set name of the sender same as certificate subject
-        $cert = openssl_x509_parse($this->currentCert);
-        $subject = $cert['subject']['CN'];
         $message->setFrom($subject);
 
         $inputFile = new slime_temporaryFile();
@@ -191,7 +190,7 @@ class slime_cryptoEngine {
         // Type application/pkcs7-mime is prefered but still not widely supported
         $encrypted_msg = $message->setPKCS7ContentType($encrypted_msg, $this->slime->settings->newerPKCS7CType, "encrypt");
 
-        $encrypted_msg = $message->removeSecondMimeVersion($encrypted_msg); 
+        $encrypted_msg = $message->removeSecondMimeVersion($encrypted_msg);
 
         $inputFile->removeFile();
         $outputFile->removeFile();
@@ -312,13 +311,21 @@ class slime_cryptoEngine {
         $result = $this->slime->settings->cliCommand($command);
         $stderr = $result['stderr'];
 
-      
-      if(strpos($stderr, "Verification successful") !== false){
-        $out |= slime_smime::MESSAGE_SIGNATURE_VERIFIED;
-      }
-      else{
-        $out |= slime_smime::MESSAGE_SIGNATURE_NOT_VERIFIED;
-      }
+        if(strpos($stderr, "Verification successful") !== false){
+            $out |= slime_smime::MESSAGE_SIGNATURE_VERIFIED;
+
+            $result = $this->checkCertificate($message);
+
+            if(!$result['success']){
+                $out |= slime_smime::MESSAGE_SIGNATURE_WRONG_SUBJECT;
+            }
+            if(isset($result['class'])){
+                $out |= $result['class'];
+            }
+        }
+        else{
+            $out |= slime_smime::MESSAGE_SIGNATURE_NOT_VERIFIED;
+        }
 
         $inputFile->removeFile();
         $certFile->removeFile();
@@ -328,22 +335,113 @@ class slime_cryptoEngine {
     }
 
     /**
+     * Parses user certificate in digital signature and checks its values
+     * 
+     * @param slime_receive_msg $message Received message object
+     * 
+     * @return array Results with key 'success' and 'class'
+     */
+
+    function checkCertificate($message){
+
+        // If certificate cannot be parsed
+        $result['success'] = false;
+
+        // Parse signature in message and get certificates included
+        $signature = $message->getSignature();
+        $certificates = $this->slime->settings->getCertificatesFromSignature($signature);
+
+        // Get first certificate 
+        if(preg_match('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $certificates, $matches)){
+            $parsedCert = openssl_x509_parse($matches[0]);
+
+            // Checks
+            $result['success'] = $this->verifySender($message, $parsedCert);
+
+            // Check only if required by user
+            $preferences = $this->slime->settings->getSettings();
+            if($preferences['slime_trust_levels']){
+                $result['class'] = $this->getTrustLevel($parsedCert);
+            }
+            
+        }
+        return $result;
+    }
+
+    /**
+     * Gets trust level of the certificate used for a signature
+     * 
+     * @param array $parsedCert parsed certificate from openssl_x509_parse()
+     * 
+     * @return int Enumerate class of the certificate
+     */
+
+    function getTrustLevel($parsedCert){
+        $subject = $parsedCert['subject'];
+
+        // If certificate doesnt contain neither organization name or organizational unit
+        if(!isset($subject['OU']) && !isset($subject['O'])){
+            return slime_smime::MESSAGE_SIGNATURE_CLASS_1;
+        }
+
+        // If certificate doesnt contain neither legal organization name or jurisdiction
+        if(!isset($subject['L']) && !isset($subject['ST']) && !isset($subject['C'])){
+            return slime_smime::MESSAGE_SIGNATURE_CLASS_2;
+        }
+
+        return slime_smime::MESSAGE_SIGNATURE_CLASS_3;;
+    }
+
+    /**
+     * Checks if sender (From attribute) matches any identity contained in digital certificate
+     * 
+     * @param slime_receive_msg $message Received message object
+     * @param array $parsedCert parsed certificate from openssl_x509_parse()
+     * 
+     * @return bool True if sender is included in cert
+     */
+
+    function verifySender($message, $parsedCert){
+
+        $sender = $message->getSender();
+        $xsender = $message->getXSender();
+
+        $possibleEmails = $parsedCert['subject'];
+
+        // If Alternative Names included, search among them as well
+        if($parsedCert['extensions']['subjectAltName']){
+            preg_match_all('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $parsedCert['extensions']['subjectAltName'], $matches);
+            $possibleEmails = array_merge($possibleEmails, $matches[0]);
+        }
+
+        // Match identities in certificate with the sender
+        foreach($possibleEmails as $email){
+            if($email == $sender || $email == $xsender){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if there is an attached certificate in the message
      * 
-     * @param rcube_message_part $attachment Current MIME message part  
+     * @param rcube_message_part $attachment Current MIME message part
+     * @param string $fileType File extension of the attachment or certificate   
      * 
      * @return bool True if a certificate is present
      */
 
-    function isAttachmentCertificate($attachment){
+    function isAttachmentCertificate($attachment, $fileType){
+        $mimeType = $fileType == ".p7c" ? "pkcs7-mime" : "pkcs7-signature";
         
         // Narrowing to S/MIME (and few others)
-        if($attachment->mimetype != "application/pkcs7-mime" && $attachment->mimetype != "application/x-pkcs7-mime"){
+        if($attachment->mimetype != ("application/" . $mimeType) && $attachment->mimetype != ("application/x-" . $mimeType)){
             return false;
         }
 
         // Standard uses .p7c files for distributing certificates
-        if(substr($attachment->filename, strpos($attachment->filename, ".p7c"), -4) === false){
+        if(strpos(substr($attachment->filename, -4), $fileType) === false){
             return false;
         }
 

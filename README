@@ -27,20 +27,20 @@ FUNCTIONALITY
 - Additional way of distributing certificates via attachments
 - Hierarchical certificate store 
 - Real-time certificate validation with each import/composed message/viewed message
-- Supports both deprecated and modern symmetric algorithms (deprecated can be turned off)
+- Supports both older and modern symmetric algorithms (older contain warnings and can be turned off)
 
 TODO
 ----
 
-- Import certificate from a signature  
-- Certificate credibility levels when verifying certificates
+- Certificate trust levels in certificate information
 - Be able to select different imported certificate for encrypting/signing 
 - Import/Export/Deletion of multiple certificates at the same time
-- Changing password changes password hash (Somehow try to fix that)
+- Changing password should change password hash
+- Deleting user folder when account deleted
 - Compression of the content before signing or encrypting (CompressionData)
 - Enable to secure PK in PKCS#12 with an additional layer via security phrase
-- Check if subject of certificate matches the sender of an e-mail
 - Client side signing (selectable) -> enable not to store private keys on the server
+- Mode in advanced settings, that enables overriding identities with the first usable cert 
 
 LICENSE DETAILS
 ---------------

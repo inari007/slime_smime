@@ -106,6 +106,17 @@ class slime_receive_msg {
     }
 
     /**
+     * Gets X-sender of the message
+     * 
+     * @return string E-mail of the x-sender
+     */
+
+    function getXSender(){
+      preg_match('/^X-Sender:\s*(.+)$/mi', $this->raw_message, $matches);
+      return trim($matches[1]);
+    }
+
+    /**
      * Get message part header and its content in multipart/signed message
      * 
      * @return string Content of the signed message
@@ -222,5 +233,32 @@ class slime_receive_msg {
 
       function isHTMLMessage($content){
         return strpos($content, "\r\nContent-Type: text/html"); 
+      }
+
+      /**
+       * Gets signature content from a signed message
+       * 
+       * @return string SignedData CMS type
+       */
+
+      function getSignature(){
+
+        // Finds child with Signature content-type
+        if(preg_match('/Content-Type: application\/(?:x-)?pkcs7-signature(.*)/s', $this->raw_message, $content)){
+          
+          // Finds signature content
+          if(!preg_match("/(?:\r\n|\n){2}(.*?)(?:\r\n|\n){2}/s", $content[1], $signature)){
+            return "";
+          }
+          
+          // Gets encoding of the content
+          if(preg_match('/Content-Transfer-Encoding:\s*(\S+)/i', $content[1], $encoding)){
+            if($encoding[1] == "base64"){
+              return base64_decode($signature[1]);
+            }
+          }
+          return $signature[1];
+        }
+        return "";
       }
 }

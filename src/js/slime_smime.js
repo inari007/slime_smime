@@ -78,9 +78,9 @@ rcmail.addEventListener('init', function(evt) {
         }
     }
 
-rcube_webmail.prototype.slime_import_attachment = function(mimeID){
+rcube_webmail.prototype.slime_import_attachment = function(mimeID, isSignature){
     var lock = this.set_busy(true, 'loading');
-    var post = {_uid: this.env.uid, _attachment: mimeID};
+    var post = {_uid: this.env.uid, _attachment: mimeID, _isSignature: isSignature};
 
     this.http_post('plugin.slime.import_certificate', post, lock);
 };
@@ -91,8 +91,10 @@ rcube_webmail.prototype.slime_save_options = function(){
         "_slime_enable" : $("#slimeenable").prop('checked'),
         "_slime_sign_every" : $("#slimesignevery").prop('checked'),
         "_slime_encrypt_every" : $("#slimeencryptevery").prop('checked'),
+        "_slime_import_signature" : $("#slimeimportsignature").prop('checked'),
         "_slime_import_all" : $("#slimeimportevery").prop('checked'),
         "_slime_disable_weak" : $("#slimedisableweak").prop('checked'),
+        "_slime_trust_levels" : $("#slimetrustlevels").prop('checked'),
         "_slime_encryption_algorithm" : $("#slime_encryption_algorithm").val(),
     };
     var lock = this.set_busy(true, 'loading');
@@ -204,13 +206,7 @@ rcube_webmail.prototype.slime_add_certs_to_list = function(r){
     row.dataset.extension = r.type;
 
     col.className = 'name certItem';
-    if((r.isOld == "True" || r.type == "crt") && this.env.used_included){
-        col.innerText = r.name;
-    }
-    else{
-        this.env.used_included = true;
-        col.innerText = r.name + " [" + r.used + "]";
-    }
+    col.innerText = r.isUsed ? r.name + " [" + this.get_label("slime_smime.used") + "]" : r.name;
     row.appendChild(col);
     row.addEventListener('click', function() {rcmail.slime_cert_select(this, r.type, r.isOld);});
     list.insert_row(row);
@@ -230,10 +226,6 @@ rcube_webmail.prototype.slime_certs = function(){
     }
     if(this.othercertslist){
         this.othercertslist.clear(true);
-    }
-
-    if(!this.env.used_included){
-        this.env.used_included = false;
     }
 
     if(!this.env.current_page){

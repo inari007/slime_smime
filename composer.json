@@ -3,7 +3,7 @@
 	"type": "roundcube-plugin",
     "description": "Server-side S/MIME Encryption for Roundcube",
 	"license" : "MIT",
-	"version" : "1.0",
+	"version" : "1.0.1",
 	"require": {
 		"php": ">=7.3.0"
 	},

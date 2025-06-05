@@ -186,6 +186,10 @@ class slime_ui{
                 $attributes['class'] = 'boxerror slime_status slime_error signed';
                 $msg = rcube::Q($this->slime->gettext('sig_invalid'));
             }
+            else if($status == slime_smime::MESSAGE_SIGNATURE_WRONG_SUBJECT){
+                $attributes['class'] = $this->slime->settings->isInStrictMode() ? 'boxerror slime_status slime_error signed' : 'boxwarning slime_status slime_warning signed';
+                $msg = rcube::Q($this->slime->gettext('sig_wrong_subject'));
+            }
             else if($status == slime_smime::MESSAGE_DECRYPTION_SUCCESSFULLY){
                 $attributes['class'] = 'boxconfirmation slime_status slime_confirm encrypted';
                 $msg = rcube::Q($this->slime->gettext('dec_success'));
@@ -205,6 +209,13 @@ class slime_ui{
             else if($status == slime_smime::MESSAGE_DECRYPTION_WEAK){
                 $attributes['class'] = $this->slime->settings->isInStrictMode() ? 'boxerror slime_status slime_error encrypted' : 'boxwarning slime_status slime_warning encrypted';
                 $msg = rcube::Q($this->slime->gettext('dec_weak_alg'));
+            }
+            else if($status == slime_smime::MESSAGE_SIGNATURE_CLASS_1 || $status == slime_smime::MESSAGE_SIGNATURE_CLASS_2 || $status == slime_smime::MESSAGE_SIGNATURE_CLASS_3){
+                $attributes['class'] = 'boxconfirmation slime_status slime_confirm alert-success';
+                $msg = rcube::Q($this->slime->gettext([
+                            'name' => 'sig_trust_level',
+                            'vars' => ['trust_level' => $this->slime->settings->mapTrustLevel($status)]
+                        ]));
             }
 
             // Saves message classes and its content
@@ -233,9 +244,9 @@ class slime_ui{
 
         foreach($this->slime->certs as $part){
             $args['content'] = html::p(['class' => 'slime_attachment boxinformation aligned-buttons'],
-                html::span(null, rcube::Q($this->slime->gettext('cert_found'))) .
+                html::span(null, rcube::Q($this->slime->gettext($part['isSignature'] ? 'sig_found' : 'cert_found'))) .
                 html::tag('button', [
-                        'onclick' => "return ".rcmail_output::JS_OBJECT_NAME.".slime_import_attachment('" . rcube::JQ($part) . "')",
+                        'onclick' => "return ".rcmail_output::JS_OBJECT_NAME.".slime_import_attachment('" . rcube::JQ($part['mimeID']) . "', '" . rcube::JQ($part['isSignature']) . "')",
                         'title'   => $this->slime->gettext('cert_title'),
                         'class'   => 'import btn-sm',
                     ], rcube::Q($this->slime->rc->gettext('import'))
@@ -277,8 +288,10 @@ class slime_ui{
         $preferences['slime_enable'] = rcube_utils::get_input_value('_slime_enable', rcube_utils::INPUT_POST);
         $preferences['slime_sign_every'] = rcube_utils::get_input_value('_slime_sign_every', rcube_utils::INPUT_POST);
         $preferences['slime_encrypt_every'] = rcube_utils::get_input_value('_slime_encrypt_every', rcube_utils::INPUT_POST);
+        $preferences['slime_import_signature'] = rcube_utils::get_input_value('_slime_import_signature', rcube_utils::INPUT_POST);
         $preferences['slime_import_all'] = rcube_utils::get_input_value('_slime_import_all', rcube_utils::INPUT_POST);
         $preferences['slime_disable_weak'] = rcube_utils::get_input_value('_slime_disable_weak', rcube_utils::INPUT_POST);
+        $preferences['slime_trust_levels'] = rcube_utils::get_input_value('_slime_trust_levels', rcube_utils::INPUT_POST);
         $preferences['slime_encryption_algorithm'] = rcube_utils::get_input_value('_slime_encryption_algorithm', rcube_utils::INPUT_POST);
 
         // Persistently saves options
@@ -502,7 +515,7 @@ class slime_ui{
                     'id'    => $item['id'],
                     'type'  => $item['type'],
                     'isOld' => $item['isOld'],
-                    'used' => $this->slime->gettext('used')
+                    'isUsed' => $item['isUsed']
             ]);
         }
 
@@ -552,6 +565,11 @@ class slime_ui{
 
         $table->add('title', html::label(null, $this->slime->gettext('subject_name')));
         $table->add(null, $this->curretData['name']);
+
+        if($this->curretData['altIdentities']){
+            $table->add('title', html::label(null, $this->slime->gettext('alternative_identities')));
+            $table->add(null, $this->curretData['altIdentities']);
+        }
 
         $table->add('title', html::label(null, $this->slime->gettext('serial_number')));
         $table->add(null, $this->curretData['serialNumber']);
@@ -783,14 +801,16 @@ class slime_ui{
      * @param string $messageID ID of the current message
      * @param string $attachmentMimeID ID of the part of the message that contains attachment
      * @param rcube_message $message Object of the current message
+     * @param bool $isSignature True if certificate is imported from SignedData CMS type
      */
 
-    function import_attachment($messageID = "", $attachmentMimeID = "", $message = null){
+    function import_attachment($messageID = "", $attachmentMimeID = "", $message = null, $isSignature = false){
 
         // If message object needs to be created (manual import)
         if($messageID == "" && $attachmentMimeID == ""){
             $messageID = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
             $attachmentMimeID = rcube_utils::get_input_value('_attachment', rcube_utils::INPUT_POST);
+            $isSignature = rcube_utils::get_input_value('_isSignature', rcube_utils::INPUT_POST) == "true";
             $message = new rcube_message($messageID);
         }
             
@@ -798,9 +818,22 @@ class slime_ui{
         if($attachmentMimeID && $messageID){
             $messageObj = new slime_receive_msg($this->slime, $message);
             
-            // Get owner E-mail
-            $newFileName = $messageObj->getSender();
+            // Get owner E-mail, XSender prefered
+            $xSender = $messageObj->getXSender();
+            $Sender = $messageObj->getSender();
+            $newFileName = $xSender == "" ? $Sender : $xSender;
             $newFileContent = $message->get_part_body($attachmentMimeID);
+
+            // If content is part of the SignedData CMS type, parse the certificates first
+            if($isSignature){
+                $newFileContent = $this->slime->settings->getCertificatesFromSignature($newFileContent);
+                
+                // Unable to get certificates from signature
+                if($newFileContent == ""){
+                    $this->slime->rc->output->show_message('slime_smime.import_signature_failed', 'error');
+                    return;
+                }
+            }
 
             $newFile = new slime_smimeFile($newFileName, $this->slime, "application/x-x509-ca-cert", $newFileContent);
             $result = $newFile->createFile();
@@ -933,6 +966,14 @@ class slime_ui{
                     'disabled' => $disabled,
                 ])));
 
+            $table->add('title', html::label(['for' => 'slimeimportsignature', 'class' => 'col-form-label col-6'],
+            rcube::Q($this->slime->gettext('import_signature'))));
+            $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_import_signature'], [
+                    'name'     => '_slime_import_signature',
+                    'id'       => 'slimeimportsignature',
+                    'disabled' => $disabled,
+                ])));
+
             $table->add('title', html::label(['for' => 'slimeimportevery', 'class' => 'col-form-label col-6'],
             rcube::Q($this->slime->gettext('import_every'))));
             $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_import_all'], [
@@ -956,6 +997,14 @@ class slime_ui{
                         'disabled' => $disabled,
                     ])));
             }
+
+            $table->add('title', html::label(['for' => 'slimetrustlevels', 'class' => 'col-form-label col-6'],
+                rcube::Q($this->slime->gettext('trust_levels'))));
+                $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_trust_levels'], [
+                        'name'     => '_slime_trust_levels',
+                        'id'       => 'slimetrustlevels',
+                        'disabled' => $disabled,
+                    ])));
 
             $select = new html_select(['name' => 'type', 'id' => 'slime_encryption_algorithm', 'class' => 'custom-select col-sm-6 slime_options_select', 'disabled' => $disabled]);
             $select = $this->addSymmetricAlgorithms($select);
@@ -1034,6 +1083,19 @@ class slime_ui{
             );
 
             $options .= html::div('form-group form-check row',
+                html::label(['for' => 'slimeimportsignature', 'class' => 'col-form-label col-6'],
+                    rcube::Q($this->slime->gettext('import_signature'))
+                )
+                . html::div('form-check col-6',
+                    $chbox->show($preferences['slime_import_signature'], [
+                            'name'     => '_slime_import_signature',
+                            'id'       => 'slimeimportsignature',
+                            'disabled' => $disabled,
+                    ])
+                )
+            );
+
+            $options .= html::div('form-group form-check row',
                 html::label(['for' => 'slimeimportevery', 'class' => 'col-form-label col-6'],
                     rcube::Q($this->slime->gettext('import_every'))
                 )
@@ -1058,6 +1120,7 @@ class slime_ui{
                 html::tag('legend', null, $this->slime->gettext('options_title_second')) 
                 . html::div('collapse slime_collapse', 
                     $this->getDisableWeakOption($chbox, $preferences, $disabled)
+                    . $this->getTrustLevelOption($chbox, $preferences, $disabled)
                     . $table->show($attrib)
                 )
             ));
@@ -1137,6 +1200,31 @@ class slime_ui{
         else{
             return "";
         }
+    }
+
+    /**
+     * Support function for slime_options_form_elastic() handler
+     * 
+     * @param html_checkbox $chbox Checkbox element to be showed
+     * @param array $preferences Current user settings
+     * @param bool $disabled True if user set enable_plugin slider to off
+     * 
+     * @return string HTML content
+     */ 
+
+    function getTrustLevelOption($chbox, $preferences, $disabled){
+        return  html::div('form-group form-check row',
+            html::label(['for' => 'slimetrustlevels', 'class' => 'col-form-label col-6'],
+                rcube::Q($this->slime->gettext('trust_levels'))
+            )
+            . html::div('form-check col-6',
+                $chbox->show($preferences['slime_trust_levels'], [
+                        'name'     => '_slime_trust_levels',
+                        'id'       => 'slimetrustlevels',
+                        'disabled' => $disabled,
+                    ])
+                )
+            );
     }
 
 }

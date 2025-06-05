@@ -271,13 +271,27 @@ class slime_settings {
     $limit = $this->maxNumberOfCertificates;
     $allCerts = array_slice($allCerts, $offset);
 
+    // Finding wheter there is PKCS#12 that matches current identity
+    $indexOfUsedPKCS = -1;
+    $allPKCS = array_slice($allPKCS, $offset);
+    foreach($allPKCS as $index => $file){
+        if($index == 0){
+            $indexOfUsedPKCS = 0;
+        }
+        else if($this->folderNameToEmail(pathinfo($file, PATHINFO_FILENAME)) == $this->slime->rc->user->get_identity()['email']){
+            $indexOfUsedPKCS = $index;
+        }
+    }
+
     // Appends metadata so it is easily showed by UI
-    foreach($allCerts as $file){
+    foreach($allCerts as $index => $file){
         $type = pathinfo($file, PATHINFO_EXTENSION);
         $email = $this->folderNameToEmail(pathinfo($file, PATHINFO_FILENAME));
         $id = uniqid($email);
+        $isUsed = $indexOfUsedPKCS == $index;
+
         $isOld = $type != "p12" && $type != "crt" ? "True" : "False";
-        array_push($certificates, array("name" => $email, "id" => $id, "type" => $type, "isOld" => $isOld));
+        array_push($certificates, array("name" => $email, "id" => $id, "type" => $type, "isOld" => $isOld, "isUsed" => $isUsed));
 
         // Checks if max number of certs is not exceeded
         if(--$limit == 0){
@@ -392,16 +406,56 @@ class slime_settings {
 
         // Finds first PKCS#12 file that matches user identity
         foreach($this->identities as $identity){
-            foreach ($allPKCS as $file) {
+            foreach($allPKCS as $file){
                 $file_name = $this->folderNameToEmail(pathinfo($file, PATHINFO_FILENAME));
 
-                // In case user removed
                 if($file_name == $identity['email']){
                     return $file_name;
                 }
             }
-        
         }
+        return "";
+    }
+
+    /**
+     * Returns file name of the user PKCS#12 file, only if it matches current user identity
+     * 
+     * @param string $From 
+     * 
+     * @return string PKCS#12 file name
+     */
+
+    function getExistingPKCS12CurrentIdentity($From){
+        $certDir = $this->getPathForUser();
+        $allPKCS = glob($certDir . "/*.p12", GLOB_BRACE);
+
+        $currentIdentity = $From;
+
+        // Finds first PKCS#12 file that matches user identity
+        foreach($allPKCS as $file){
+            $fileName = $this->folderNameToEmail(pathinfo($file, PATHINFO_FILENAME));
+
+            if($fileName == $currentIdentity){
+                return $fileName;
+            }
+        }
+
+        // If any subject name matches, parse files to get Alternate Identities
+        foreach($allPKCS as $file){
+            $fileName = $this->folderNameToEmail(pathinfo($file, PATHINFO_FILENAME));
+
+            $smimeFile = new slime_smimeFile($fileName, $this->slime, "application/x-pkcs12");
+            $cert = $smimeFile->getCertificate();
+            $certData = openssl_x509_parse($cert);
+            $altEmails = $smimeFile->getSubjectAltEmails($certData);
+
+            foreach($altEmails as $email){
+                if($email == $currentIdentity){
+                    return $fileName;
+                }
+            }
+        }
+
         return "";
     }
 
@@ -471,8 +525,10 @@ class slime_settings {
           'slime_enable' => $preferences['slime_enable'] == "true" ? 1 : 0,
           'slime_sign_every' => $preferences['slime_sign_every'] == "true" ? 1 : 0,
           'slime_encrypt_every' => $preferences['slime_encrypt_every'] == "true" ? 1 : 0,
+          'slime_import_signature' => $preferences['slime_import_signature'] == "true" ? 1 : 0,
           'slime_import_all' => $preferences['slime_import_all'] == "true" ? 1 : 0,
           'slime_disable_weak' => $preferences['slime_disable_weak'] == "true" ? 1 : 0,
+          'slime_trust_levels' => $preferences['slime_trust_levels'] == "true" ? 1 : 0,
           'slime_encryption_algorithm' => $preferences['slime_encryption_algorithm'],
         ]); 
     }
@@ -487,8 +543,10 @@ class slime_settings {
         $preferences['slime_enable'] = $this->slime->rc->config->get('slime_enable', 1);
         $preferences['slime_sign_every'] = $this->slime->rc->config->get('slime_sign_every', 0);
         $preferences['slime_encrypt_every'] = $this->slime->rc->config->get('slime_encrypt_every', 0);
+        $preferences['slime_import_signature'] = $this->slime->rc->config->get('slime_import_signature', 0);
         $preferences['slime_import_all'] = $this->slime->rc->config->get('slime_import_all', 0);
         $preferences['slime_disable_weak'] = $this->slime->rc->config->get('slime_disable_weak', 0);
+        $preferences['slime_trust_levels'] = $this->slime->rc->config->get('slime_trust_levels', 0);
         $preferences['slime_encryption_algorithm'] = $this->slime->rc->config->get('slime_encryption_algorithm', "aes_128_cbc");
   
         return $preferences;
@@ -593,5 +651,59 @@ class slime_settings {
 
      function getAuthEnvelopedAlgList(){
         return array('aes_128_gcm', 'aes_192_gcm', 'aes_256_gcm');
+    }
+
+   /**
+    * Gets all certificates included in a digital signature  
+    *
+    * @param string $signature SignedData CMS type in DER
+    *
+    * @return string Certificates in PEM format
+    */
+
+    function getCertificatesFromSignature($signature){
+
+        $signatureFile = new slime_temporaryFile();
+        $signatureFile->writeContent($signature);
+
+        // Parses SignedData and prints them in PEM format 
+        $command = "openssl pkcs7 -in " . $signatureFile->getFile() . " -inform DER -print_certs";
+        $result = $this->cliCommand($command);
+        $signatureFile->removeFile();
+
+        // Failed to parse signature
+        if($result['stderr']){
+            return "";
+        }
+        $stdout = $result['stdout'];
+
+        // Signature doesn't contain any certificate
+        if(preg_match_all('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $stdout, $all_certs) === false){
+            return "";
+        }
+        $allCerts = implode("\r\n", $all_certs[0]);
+
+        return $allCerts;
+    }
+
+    /**
+    * Maps trust level value to a printable one 
+    *
+    * @param int $trustLevel Enumerate trust level
+    *
+    * @return string Printable trust level
+    */
+
+    function mapTrustLevel($trustLevel){
+        switch($trustLevel){
+            case slime_smime::MESSAGE_SIGNATURE_CLASS_1:
+                return 1;
+            case slime_smime::MESSAGE_SIGNATURE_CLASS_2:
+                return 2;
+            case slime_smime::MESSAGE_SIGNATURE_CLASS_3:
+                return 3;
+            default:
+                return 0;
+        }
     }
 }

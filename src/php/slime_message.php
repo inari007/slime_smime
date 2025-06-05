@@ -111,6 +111,8 @@ class slime_message extends Mail_mime{
 
     /**
      * Sets From attribute in the header
+     * 
+     * @param string $subject New email to be set 
      */
 
       function setFrom($subject){
@@ -118,6 +120,11 @@ class slime_message extends Mail_mime{
         // Replaces only email value in <$email>
         $currentFrom = $this->header['From'];
         $newFrom = preg_replace('/<[^>]*>/', "<$subject>", $currentFrom);
+
+        if($this->header['X-Sender']){
+          $this->header['X-Sender'] = $subject;
+          $this->message->headers['X-Sender'] = $subject;
+        }
 
         $this->header['From'] = $newFrom;
         $this->message->headers['From'] = $newFrom;
@@ -303,12 +310,10 @@ class slime_message extends Mail_mime{
     /**
      * Get E-mail addresses of all recipients of the message
      * 
-     * @param slime_smime $slime Plugin class
-     * 
      * @return array E-mail addresses
      */
 
-    function getAllRecipients($slime){
+    function getAllRecipients(){
       $line = $this->header['To'];
       $recipients = explode(",", $line);
 
@@ -317,7 +322,7 @@ class slime_message extends Mail_mime{
 
         // E-mail Regex
         preg_match('/<?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?/', trim($recipient), $matches);
-        array_push($out, $slime->settings->emailToFolderName($matches[1]) . ".crt");
+        array_push($out, $matches[1]);
       }
       
       return $out;

@@ -8,10 +8,10 @@ $labels['sign'] = 'Digitally sign this message';
 $labels['encrypt'] = 'Encrypt this message';
 $labels['distribute'] = 'Attach my certificate';
 
-$labels['send_error_cert_missing'] = 'Encryption failed! Sender certificate was not found!';
+$labels['send_error_cert_missing'] = 'Encryption failed! Unable to find a certificate that matches current identity!';
 $labels['send_error_cert_invalid'] = 'Sending failed! Used certificate is invalid!';
 
-$labels['sign_error_pkcs'] = 'Signing failed! Unable to find a PKCS#12 file!';
+$labels['sign_error_pkcs'] = 'Signing failed! Unable to find a PKCS#12 file that matches current identity!';
 $labels['sign_error_pk'] = 'Signing failed! Unable to find a private key!';
 $labels['sign_error'] = 'Signing failed! Undefined error!';
 
@@ -20,15 +20,19 @@ $labels['encrypt_error_cert_rec'] = 'Encryption failed! Unable to find a certifi
 $labels['encrypt_error_recipient_cert_invalid'] = 'Encryption failed! Recipient $recipient has an invalid certificate!';
 $labels['encrypt_error'] = 'Encryption failed! Undefined error!';
 
-$labels['distribute_error_pkcs'] = 'Attaching certificate failed! Unable to find a PKCS#12 file!';
+$labels['distribute_error_pkcs'] = 'Attaching certificate failed! Unable to find a PKCS#12 file that matches current identity!';
 
 // Receive a message
 
 $labels['cert_found'] = 'This message contains attached digital certificate.';
 $labels['cert_title'] = 'Import a certificate';
 
+$labels['sig_found'] = 'Digital signature contains a certificate.';
+
 $messages['sig_valid'] = 'Verified signature!';
 $messages['sig_invalid'] = 'Invalid signature!';
+$messages['sig_wrong_subject'] = 'The message sender is not the owner of the certificate inside the electronic signature!';
+$messages['sig_trust_level'] = 'Trust level $trust_level!';
 
 $messages['dec_success'] = 'Message decrypted successfully!';
 $messages['dec_failed'] = 'Message decryption failed!';
@@ -52,9 +56,11 @@ $labels['options_title_first'] = 'Main Options';
 $labels['enable'] = 'Enable S/MIME';
 $labels['encrypt_every'] = 'Encrypt every message (if possible)';
 $labels['sign_every'] = 'Sign every message (if possible)';
+$labels['import_signature'] = 'Import certificates from digital signature';
 $labels['import_every'] = 'Import all received certificates';
 
 $labels['options_title_second'] = 'Advanced Options';
+$labels['trust_levels'] = 'Show trust levels of digital signatures';
 $labels['disable_weak'] = 'Disable weak cipher warnings';
 
 $labels['encryption_algorithm'] = 'Encryption algorithm';
@@ -74,6 +80,7 @@ $labels['save'] = 'Save';
 $labels['cert_title'] = 'Certificate information';
 $labels['certificate_title_first'] = 'Basic information';
 $labels['subject_name'] = 'Subject name';
+$labels['alternative_identities'] = 'Alternative identities';
 $labels['serial_number'] = 'Serial Number';
 $labels['valid_from'] = 'Valid from';
 $labels['expires_on'] = 'Expires on';
@@ -98,6 +105,7 @@ $labels['import_warning'] = '$error';
 $labels['import_password_error'] = 'Incorrect password!';
 $labels['import_invalid_cert'] = 'Invalid certificate format!';
 $labels['import_invalid_pkcs7'] = 'Invalid PKCS#7 format!';
+$labels['import_signature_failed'] = 'Unable to extract certificates from the digital signature!';
 $labels['certificate_protected_title'] = 'Enter a password';
 $labels['certificate_protected'] = 'The certificate is protected by a password. Please enter the password to import it.';
 $labels['import_file_not_supported'] = 'This file type is not supported!';
