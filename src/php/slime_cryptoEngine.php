@@ -573,11 +573,12 @@ class slime_cryptoEngine {
         }
 
         else{
+            $weakAlgs = $this->slime->settings->mapSymAlgs($this->slime->settings->weakAlgs);
 
             // Checks if message was encrypted by any algorithm that is considered weak
-            foreach($this->slime->settings->weakAlgs as $weakAlg){
+            foreach($weakAlgs as $weakAlg){
                 if(strpos($output, $weakAlg)){
-                    $out = slime_smime::FUNCTION_FAILED;
+                    $out = slime_smime::MESSAGE_DECRYPTION_WEAK;
                 }
                 else{
                     $out = slime_smime::FUNCTION_SUCCESS;

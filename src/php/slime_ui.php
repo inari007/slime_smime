@@ -47,7 +47,7 @@ class slime_ui{
         else{
             $this->slime->include_stylesheet("src/css/slime_larry.css");
         }
-        $this->slime->include_script('src/js/slime_smime.js');
+        $this->slime->include_script('src/js/min_slime_smime.js');
 
         // Handler for all setting actions 
         $this->slime->add_hook('settings_actions', array($this, 'settings_actions'));
@@ -810,7 +810,7 @@ class slime_ui{
         if($messageID == "" && $attachmentMimeID == ""){
             $messageID = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
             $attachmentMimeID = rcube_utils::get_input_value('_attachment', rcube_utils::INPUT_POST);
-            $isSignature = rcube_utils::get_input_value('_isSignature', rcube_utils::INPUT_POST) == "true";
+            $isSignature = rcube_utils::get_input_value('_isSignature', rcube_utils::INPUT_POST);
             $message = new rcube_message($messageID);
         }
             

@@ -706,4 +706,24 @@ class slime_settings {
                 return 0;
         }
     }
+
+    /**
+    * Maps symmetric algorithms to standardized form
+    *
+    * @param array $algorithms Symmetric algoritms from config.inc.php
+    *
+    * @return array Their standardized forms
+    */
+
+    function mapSymAlgs($algorithms){
+        $map = ['3des' => 'des-ede3-cbc', 'aes_128_cbc' => 'aes-128-cbc', 'aes_192_cbc' => 'aes-192-cbc',
+                'aes_256_cbc' => 'aes-256-cbc', 'rc2_128' => 'rc2-128-cbc', 'aes_128_gcm' => 'aes-128-gcm',
+                'aes_192_gcm' => 'aes-192-gcm', 'aes_256_gcm' => 'aes-256-gcm'];
+
+        $mapped = array_map(function($item) use ($map) {
+            return $map[$item] ?? $item;
+        }, $algorithms);
+
+        return $mapped;
+    }
 }

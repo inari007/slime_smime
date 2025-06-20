@@ -96,7 +96,8 @@
 
       if($this->rc->task == 'mail'){
         $this->add_hook('message_before_send', array($this, 'processMessageToSend'));
-        $this->add_hook('message_load', array($this, 'processReceivedMessage'));
+        $this->add_hook('message_part_structure', array($this, 'processReceivedMessage'));
+        $this->add_hook('message_load', array($this, 'processAttachmentsMessage'));
         $this->add_hook('message_body_prefix', array($this, 'showMessageStatusText'));
         $this->add_hook('template_object_messagebody', array($this, 'handleCertificateAttachment'));
         $this->register_action('plugin.slime.import_certificate', array($this, 'importCert'));
@@ -294,8 +295,8 @@
     }
 
     /**
-     * Handler for message_load hook
-     * Shows attached certificate/verifies signature/decrypts incoming message
+     * Handler for message_part_structure hook
+     * Verifies signature/Decrypts message
      * 
      * @param array $args Original parameters
      * 
@@ -312,19 +313,19 @@
         return $args;
       }
 
+      // Checks if current MIME part is encrypted/signed/contains certificate
+      $rootPart = $args['structure'];
+      $rootPartCType = $args['mimetype'];
+      $purposeBits = $this->getMessagePurpose($rootPart, $rootPartCType);
+
+      if($purposeBits == 0 || $purposeBits == self::MESSAGE_ATTACHED_CERTIFICATE){
+        return $args;
+      }
+
       $message = $args['object'];
       $messageObj = new slime_receive_msg($this, $message);
 
-      // Checks if message is encrypted/signed/contains certificate
-      $rootPart = $messageObj->getMessageStructure();
-      $rootPartCType = $messageObj->getMimeType($rootPart);
-      $purposeBits = $this->getMessagePurpose($rootPart, $rootPartCType);
-
-      if($purposeBits == 0){
-        return $args;
-      }
       $purpose['sign'] = $this->isBitSet($purposeBits, self::MESSAGE_SIGNED);
-      $purpose['attach'] = $this->isBitSet($purposeBits, self::MESSAGE_ATTACHED_CERTIFICATE);
       $purpose['encrypt'] = $this->isBitSet($purposeBits, self::MESSAGE_ENCRYPTED);
       $purpose['encryptAuth'] = $this->isBitSet($purposeBits, self::MESSAGE_ENCRYPTED_AUTH);
 
@@ -341,17 +342,11 @@
       $mimeType = $filePath == "" ? "application/x-x509-ca-cert" : "application/x-pkcs12";
       $pkcsFile = new slime_smimeFile($filePath, $this, $mimeType);
 
-      // If only attached certificate is present
-      if($purpose['attach'] && !$purpose['sign'] && !$purpose['encrypt']){
-        $engine = new slime_cryptoEngine($this, "", "", "");
-      }
-      else{
-        $cert = $pkcsFile->getCertificate();
-        $pk = $pkcsFile->getPK();
-        $extracerts = $pkcsFile->getExtraCerts();
-  
-        $engine = new slime_cryptoEngine($this, $cert, $pk, $extracerts);
-      }
+      $cert = $pkcsFile->getCertificate();
+      $pk = $pkcsFile->getPK();
+      $extracerts = $pkcsFile->getExtraCerts();
+
+      $engine = new slime_cryptoEngine($this, $cert, $pk, $extracerts);
 
       // Encrypted message
       if($purpose['encrypt']){
@@ -380,9 +375,34 @@
         
         // Sets content of the message
         $messageObj->setContent($messageInfo['content']);
-        if($messageObj->isMessageSigned($messageInfo['content'])){
+
+        // Additional formating for decrypted messages
+        $newStructure = rcube_mime::parse_message($messageObj->normalizeMessage($messageObj->getContent()));
+
+        $args['object']->body = $this->decryptedToPrintable($newStructure);
+        $args['object']->structure = $newStructure;
+        $args['object']->headers->structure = $newStructure;
+
+        // Force decrypted message to be processed again
+        $args['recursive'] = true;
+        $args['mimetype'] = $newStructure->mimetype;
+
+        // Also sets properties of the newly decrypted message
+        if($newStructure->mimetype == "multipart/signed"){
           $purpose['sign'] = true;
         }
+        
+        // Adds decrypted attachments
+        $attachments = $this->findAllAttachments($newStructure);
+
+        foreach ($attachments as $attachment){
+
+          // Cancel decoding (already decoded)
+          $attachment->encoding = "";
+          $args['object']->mime_parts[] = $attachment;
+          $args['object']->attachments[] = $attachment;
+        }
+        
       }
 
       // Signed message
@@ -416,29 +436,45 @@
         }
       }
 
-      // Additional formating for decrypted messages
-      if($purpose['encrypt']){
-        $newStructure = rcube_mime::parse_message($messageObj->getContent());
-
-        $args['object']->body = $this->decryptedToPrintable($newStructure);
-        $args['object']->structure = $newStructure;
-        
-        // Adds decrypted attachments
-        $attachments = $this->findAllAttachments($newStructure);
-
-        $index = count($args['object']->attachments);
-        foreach ($attachments as $attachment){
-          $attachment->mime_id = (string) ++$index;
-          $args['object']->attachments[] = $attachment;
-          $args['object']->mime_parts[] = $attachment;
-        }
+      return $args;
       }
 
-      // Initialize importable attachments/certificates
-      $this->certs = array();
+    /**
+     * Handler for message_load hook
+     * Shows attached certificate
+     * 
+     * @param array $args Original parameters
+     * 
+     * @return array Modified parameters
+     */
 
-      // Attached certificates
-      if($purpose['attach'] || ($purpose['sign'] && $preferences['slime_import_signature'])){
+      function processAttachmentsMessage($args){
+
+        // Get user settings
+        $preferences = $this->settings->getSettings();
+
+        // If plugin is turned off
+        if(!$preferences['slime_enable']){
+          return $args;
+        }
+
+        $message = $args['object'];
+        $messageObj = new slime_receive_msg($this, $message);
+
+        // Checks if current MIME part is encrypted/signed/contains certificate
+        $rootPart = $messageObj->getMessageStructure();
+        $rootPartCType = $messageObj->getMimeType($rootPart);
+        $purposeBits = $this->getMessagePurpose($rootPart, $rootPartCType);
+
+        if(!$this->isBitSet($purposeBits, self::MESSAGE_ATTACHED_CERTIFICATE) && (!$this->isBitSet($purposeBits, self::MESSAGE_SIGNED) || !$preferences['slime_import_signature'])){
+          return $args;
+        }
+
+        // If attached certificate is present then PKCS#12 is not needed 
+        $engine = new slime_cryptoEngine($this, "", "", "");
+
+        // Initialize importable attachments/certificates
+        $this->certs = array();
 
         // Checks all the attachments
         foreach((array) $args['object']->attachments as $attachment){
@@ -446,7 +482,8 @@
           // Checks if attachment is a attached certificate or a signature
           $isAttachedCertificate = $engine->isAttachmentCertificate($attachment, ".p7c");
           $isAttachedSignature = $engine->isAttachmentCertificate($attachment, ".p7s");
-          if($isAttachedCertificate || $isAttachedSignature){
+
+          if($isAttachedCertificate || ($isAttachedSignature && $preferences['slime_import_signature'])){
             $this->rc->output->set_env('uid', $message->uid);
 
             // Automatically import a certificate if set in settings
@@ -461,33 +498,51 @@
             array_push($this->certs, $attachmentItem);
           }
         }
-      }
 
-      return $args;
+        return $args;
       }
 
     /**
-     * Recursively find out which S/MIME operations were used on the message
+     * Recursively find out which S/MIME operations were used on the current MIME part
      * 
      * @param rcube_message_part $currentPart Message node with one distinguish content type 
      * @param string $cType Content Type of the part
      * 
-     * @return string Printable content
+     * @return string Purpose of the MIME part
      */
 
-      function getMessagePurpose($currentPart, $cType){
+      function getMessagePurpose($currentPart, $cType, $attachCheck = false){
     
         $purpose = 0;
   
-        // Leaf nodes
-        if(strpos($cType, "multipart") === false){
+        // Parent nodes
+        if(strpos($cType, "multipart") === 0){
+          if($cType == "multipart/signed"){
+            $purpose = self::MESSAGE_SIGNED;
+          }
+          else{
+            foreach($currentPart->parts as $child){
+              $purpose |= $this->getMessagePurpose($child, $child->mimetype, true);
+           }
+          }
+        }
+
+        // Leaf nodes check for attached certificates (only once when multipart is a parent)
+        else if($attachCheck){
+          if($cType == "application/x-pkcs7-mime" || $cType == "application/pkcs7-mime"){
+            if(strpos($currentPart->filename, ".p7c", -4) !== false){
+                $purpose = self::MESSAGE_ATTACHED_CERTIFICATE;
+              }
+          }
+        }
+        
+  
+        // Leaf nodes (SignedData or EnvelopedData/AuthEnvelopedData)
+        else{
           if($cType == "application/x-pkcs7-mime" || $cType == "application/pkcs7-mime"){
             if(isset($currentPart->ctype_parameters['smime-type'])){
               if($currentPart->ctype_parameters['smime-type'] == "signed-data"){
                 $purpose = self::MESSAGE_SIGNED;
-              }
-              else if($currentPart->ctype_parameters['smime-type'] == "certs-only"){
-                $purpose = self::MESSAGE_ATTACHED_CERTIFICATE;
               }
               else if($currentPart->ctype_parameters['smime-type'] == "enveloped-data"){
                 $purpose = self::MESSAGE_ENCRYPTED;
@@ -496,20 +551,6 @@
                 $purpose = self::MESSAGE_ENCRYPTED | self::MESSAGE_ENCRYPTED_AUTH;
               }
             }
-            else if(strpos($currentPart->filename, ".p7c", -4) !== false){
-              $purpose = self::MESSAGE_ATTACHED_CERTIFICATE;
-            }
-          }
-        }
-  
-        // Parent nodes
-        else{
-          if($cType == "multipart/signed"){
-            $purpose = self::MESSAGE_SIGNED;
-          }
-  
-          foreach($currentPart->parts as $child){
-            $purpose |= $this->getMessagePurpose($child, $child->mimetype);
           }
         }
         return $purpose;

@@ -24,7 +24,7 @@ class slime_receive_msg {
      * Creates received message object
      * 
      * @param slime_smime $slime Plugin class
-     * @param rcube_message $message Received message object
+     * @param object $message Received message object
      */
 
     function __construct($slime, $message){
@@ -213,19 +213,6 @@ class slime_receive_msg {
       }
 
     /**
-     * Checks if message is signed
-     * 
-     * @param string $content Message content
-     * 
-     * @return bool True if message is signed
-     */
-
-      function isMessageSigned($content){
-        $pattern = '/smime-type="signed-data"|Content-Type:\s*multipart\/signed;/i';
-        return preg_match($pattern, $content, $matches);
-      }
-
-    /**
      * Checks if message includes HTML content
      * 
      * @return bool True if message includes HTML content
@@ -243,21 +230,25 @@ class slime_receive_msg {
 
       function getSignature(){
 
+        $structure = $this->message->structure;
+        $boundary = "--" . $this->getBoundary($structure);
+
         // Finds child with Signature content-type
         if(preg_match('/Content-Type: application\/(?:x-)?pkcs7-signature(.*)/s', $this->raw_message, $content)){
-          
+
           // Finds signature content
-          if(!preg_match("/(?:\r\n|\n){2}(.*?)(?:\r\n|\n){2}/s", $content[1], $signature)){
+          if(!preg_match("/(?:\r\n|\n){2}(.*?)(?=" . preg_quote($boundary, '/') . ")/s", $content[1], $signature)){
             return "";
           }
+          $signature = trim($signature[1]);
           
           // Gets encoding of the content
           if(preg_match('/Content-Transfer-Encoding:\s*(\S+)/i', $content[1], $encoding)){
             if($encoding[1] == "base64"){
-              return base64_decode($signature[1]);
+              return base64_decode($signature);
             }
           }
-          return $signature[1];
+          return $signature;
         }
         return "";
       }
