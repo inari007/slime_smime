@@ -56,10 +56,11 @@ $labels['enable'] = 'Povolit S/MIME';
 $labels['encrypt_every'] = 'Šifrovat všechny zprávy (pokud možno)';
 $labels['sign_every'] = 'Podepsat všechny zprávy (pokud možno)';
 $labels['import_signature'] = 'Import certifikátů skrze elektronický podpis';
-$labels['import_every'] = 'Importovat všechny doručené certifikáty';
+$labels['import_every'] = 'Importovat doručené certifikáty automaticky';
 
 $labels['options_title_second'] = 'Pokročilá nastavení';
-$labels['trust_levels'] = 'Zobrazovat úrovně důvěryhodnosti elektronických podpisů';
+$labels['html_encryption'] = 'Povolit šifrování obsahu HTML';
+$labels['trust_levels'] = 'Zobrazovat úrovně důvěryhodnosti digitálních certifikátů';
 $labels['disable_weak'] = 'Vypnout varování o slabých šifrách';
 
 $labels['encryption_algorithm'] = 'Šifrovací algoritmus';

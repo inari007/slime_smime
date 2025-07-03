@@ -519,6 +519,7 @@ class slime_settings {
 
         // If strict mode is on, disable weak algorithms by default
         if($this->isInStrictMode()){
+          $preferences['slime_html_encryption'] = "false";
           $preferences['slime_disable_weak'] = "false";
         }
         $this->slime->rc->user->save_prefs([
@@ -527,8 +528,9 @@ class slime_settings {
           'slime_encrypt_every' => $preferences['slime_encrypt_every'] == "true" ? 1 : 0,
           'slime_import_signature' => $preferences['slime_import_signature'] == "true" ? 1 : 0,
           'slime_import_all' => $preferences['slime_import_all'] == "true" ? 1 : 0,
-          'slime_disable_weak' => $preferences['slime_disable_weak'] == "true" ? 1 : 0,
+          'slime_html_encryption' => $preferences['slime_html_encryption'] == "true" ? 1 : 0,
           'slime_trust_levels' => $preferences['slime_trust_levels'] == "true" ? 1 : 0,
+          'slime_disable_weak' => $preferences['slime_disable_weak'] == "true" ? 1 : 0,
           'slime_encryption_algorithm' => $preferences['slime_encryption_algorithm'],
         ]); 
     }
@@ -545,8 +547,9 @@ class slime_settings {
         $preferences['slime_encrypt_every'] = $this->slime->rc->config->get('slime_encrypt_every', 0);
         $preferences['slime_import_signature'] = $this->slime->rc->config->get('slime_import_signature', 0);
         $preferences['slime_import_all'] = $this->slime->rc->config->get('slime_import_all', 0);
-        $preferences['slime_disable_weak'] = $this->slime->rc->config->get('slime_disable_weak', 0);
+        $preferences['slime_html_encryption'] = $this->slime->rc->config->get('slime_html_encryption', 0);
         $preferences['slime_trust_levels'] = $this->slime->rc->config->get('slime_trust_levels', 0);
+        $preferences['slime_disable_weak'] = $this->slime->rc->config->get('slime_disable_weak', 0);
         $preferences['slime_encryption_algorithm'] = $this->slime->rc->config->get('slime_encryption_algorithm', "aes_128_cbc");
   
         return $preferences;
@@ -677,13 +680,76 @@ class slime_settings {
         }
         $stdout = $result['stdout'];
 
+        // Creates CA path (user certificate first, root CA last)
+        $stdoutReordered = $this->reorderCertificates($stdout);
+
         // Signature doesn't contain any certificate
-        if(preg_match_all('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $stdout, $all_certs) === false){
+        if(preg_match_all('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $stdoutReordered, $all_certs) === false){
             return "";
         }
-        $allCerts = implode("\r\n", $all_certs[0]);
+        $allCerts = implode("\r\n\r\n", $all_certs[0]);
 
         return $allCerts;
+    }
+
+    /**
+    * Reorders certificates in the signature from the subject to the root CA (Ascending)
+    * (Most clients sends it either ascending or descending)
+    *
+    * @param string $printedCerts Output of the openssl -print_certs
+    *
+    * @return string Same output structure but in the correct order
+    */
+
+    function reorderCertificates($printedCerts){
+
+        // Parses output of openssl -print_certs
+        preg_match_all('/subject=.*?-----END CERTIFICATE-----/is', $printedCerts, $matches);
+        $singleCerts = $matches[0];
+
+        // Gets subjects and issuers of certificates
+        foreach($singleCerts as $cert){
+            preg_match_all('/subject=([^\n]+)\nissuer=([^\n]+)/i', $cert, $matches, PREG_SET_ORDER);
+            $subjects[] = trim($matches[0][1]);
+            $issuers[] = trim($matches[0][2]);
+        }
+
+        // Finds first certificate
+        $certs = array();
+        $currentIndex = 0;
+        foreach($subjects as $subjectIndex => $subject){
+            $hasIssuer = false;
+            foreach($issuers as $issuer){
+                if($issuer == $subject){
+                    $hasIssuer = true;
+                }
+            }
+
+            // If certificate subject is not issuer for anybody, then it's user's 
+            if(!$hasIssuer){
+                $certs[] = $singleCerts[$subjectIndex];
+                $currentIndex = $subjectIndex;
+                break;
+            }
+        }
+
+        // Completes certificate path
+        do{
+            $issuer = $issuers[$currentIndex];
+            $previousIndex = $currentIndex;
+
+            // Finds issuer of the current certificate
+            foreach($subjects as $subjectIndex => $subject){
+                if($subject == $issuer){
+                    $currentIndex = $subjectIndex;
+                    $certs[] = $singleCerts[$subjectIndex]; 
+                    break;
+                }
+            }
+
+        }while($currentIndex != $previousIndex);
+
+        return implode("\r\n\r\n", $certs);
     }
 
     /**

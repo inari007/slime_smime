@@ -290,8 +290,9 @@ class slime_ui{
         $preferences['slime_encrypt_every'] = rcube_utils::get_input_value('_slime_encrypt_every', rcube_utils::INPUT_POST);
         $preferences['slime_import_signature'] = rcube_utils::get_input_value('_slime_import_signature', rcube_utils::INPUT_POST);
         $preferences['slime_import_all'] = rcube_utils::get_input_value('_slime_import_all', rcube_utils::INPUT_POST);
-        $preferences['slime_disable_weak'] = rcube_utils::get_input_value('_slime_disable_weak', rcube_utils::INPUT_POST);
+        $preferences['slime_html_encryption'] = rcube_utils::get_input_value('_slime_html_encryption', rcube_utils::INPUT_POST);
         $preferences['slime_trust_levels'] = rcube_utils::get_input_value('_slime_trust_levels', rcube_utils::INPUT_POST);
+        $preferences['slime_disable_weak'] = rcube_utils::get_input_value('_slime_disable_weak', rcube_utils::INPUT_POST);
         $preferences['slime_encryption_algorithm'] = rcube_utils::get_input_value('_slime_encryption_algorithm', rcube_utils::INPUT_POST);
 
         // Persistently saves options
@@ -450,7 +451,7 @@ class slime_ui{
         $password = rcube_utils::get_input_value('_passwd', rcube_utils::INPUT_POST);
         $isOld = rcube_utils::get_input_value('_isOld', rcube_utils::INPUT_POST);
         $extension = rcube_utils::get_input_value('_extension', rcube_utils::INPUT_POST);
-
+        
         // The export of the file
         $success = $this->slime->settings->exportCertificate($id, $exportType, $password, $isOld == "True", $extension);
 
@@ -989,11 +990,11 @@ class slime_ui{
             $table = new html_table(['cols' => 2]);
 
             if(!$this->slime->settings->isInStrictMode()){
-                $table->add('title', html::label(['for' => 'slimedisableweak', 'class' => 'col-form-label col-6'],
-                rcube::Q($this->slime->gettext('disable_weak'))));
-                $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_disable_weak'], [
-                        'name'     => '_slime_disable_weak',
-                        'id'       => 'slimedisableweak',
+                $table->add('title', html::label(['for' => 'slimehtmlencryption', 'class' => 'col-form-label col-6'],
+                rcube::Q($this->slime->gettext('html_encryption'))));
+                $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_html_encryption'], [
+                        'name'     => '_slime_html_encryption',
+                        'id'       => 'slimehtmlencryption',
                         'disabled' => $disabled,
                     ])));
             }
@@ -1005,6 +1006,17 @@ class slime_ui{
                         'id'       => 'slimetrustlevels',
                         'disabled' => $disabled,
                     ])));
+
+            if(!$this->slime->settings->isInStrictMode()){
+                $table->add('title', html::label(['for' => 'slimedisableweak', 'class' => 'col-form-label col-6'],
+                rcube::Q($this->slime->gettext('disable_weak'))));
+                $table->add(null, html::div('form-check col-6', $chbox->show($preferences['slime_disable_weak'], [
+                        'name'     => '_slime_disable_weak',
+                        'id'       => 'slimedisableweak',
+                        'disabled' => $disabled,
+                    ])));
+            }
+                    
 
             $select = new html_select(['name' => 'type', 'id' => 'slime_encryption_algorithm', 'class' => 'custom-select col-sm-6 slime_options_select', 'disabled' => $disabled]);
             $select = $this->addSymmetricAlgorithms($select);
@@ -1119,8 +1131,9 @@ class slime_ui{
             $options .= html::div(['class' => 'smime_options_title advanced', 'id' => 'slime_advanced'], html::tag('fieldset', ['class' => "advanced"],
                 html::tag('legend', null, $this->slime->gettext('options_title_second')) 
                 . html::div('collapse slime_collapse', 
-                    $this->getDisableWeakOption($chbox, $preferences, $disabled)
+                    $this->getHTMLEncryptionOption($chbox, $preferences, $disabled)
                     . $this->getTrustLevelOption($chbox, $preferences, $disabled)
+                    . $this->getDisableWeakOption($chbox, $preferences, $disabled)
                     . $table->show($attrib)
                 )
             ));
@@ -1192,6 +1205,37 @@ class slime_ui{
                 $chbox->show($preferences['slime_disable_weak'], [
                         'name'     => '_slime_disable_weak',
                         'id'       => 'slimedisableweak',
+                        'disabled' => $disabled,
+                    ])
+                )
+            );
+        }
+        else{
+            return "";
+        }
+    }
+
+    /**
+     * Support function for slime_options_form_elastic() handler
+     * Disables option: 'Enable HTML content encryption' if strict mode is set in config.inc
+     * 
+     * @param html_checkbox $chbox Checkbox element to be showed
+     * @param array $preferences Current user settings
+     * @param bool $disabled True if user set enable_plugin slider to off
+     * 
+     * @return string HTML content
+     */ 
+
+    function getHTMLEncryptionOption($chbox, $preferences, $disabled){
+        if(!$this->slime->settings->isInStrictMode()){
+            return  html::div('form-group form-check row',
+            html::label(['for' => 'slimehtmlencryption', 'class' => 'col-form-label col-6'],
+                rcube::Q($this->slime->gettext('html_encryption'))
+            )
+            . html::div('form-check col-6',
+                $chbox->show($preferences['slime_html_encryption'], [
+                        'name'     => '_slime_html_encryption',
+                        'id'       => 'slimehtmlencryption',
                         'disabled' => $disabled,
                     ])
                 )

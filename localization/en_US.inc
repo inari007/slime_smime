@@ -57,10 +57,11 @@ $labels['enable'] = 'Enable S/MIME';
 $labels['encrypt_every'] = 'Encrypt every message (if possible)';
 $labels['sign_every'] = 'Sign every message (if possible)';
 $labels['import_signature'] = 'Import certificates from digital signature';
-$labels['import_every'] = 'Import all received certificates';
+$labels['import_every'] = 'Import received certificates automatically';
 
 $labels['options_title_second'] = 'Advanced Options';
-$labels['trust_levels'] = 'Show trust levels of digital signatures';
+$labels['html_encryption'] = 'Enable HTML content encryption';
+$labels['trust_levels'] = 'Show trust levels of digital certificates';
 $labels['disable_weak'] = 'Disable weak cipher warnings';
 
 $labels['encryption_algorithm'] = 'Encryption algorithm';

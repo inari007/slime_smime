@@ -134,9 +134,10 @@
       }
 
       $message = new slime_message($args['message']);
+      $preferences = $this->settings->getSettings();
 
-      // Don't encrypt HTML messages (EFAIL vulnerability)
-      if($message->isMsgHTML && $purpose['encrypt']){
+      // Don't encrypt HTML messages by default (EFAIL vulnerability)
+      if($message->isMsgHTML && $purpose['encrypt'] && !$preferences['slime_html_encryption']){
         return $this->generateErrorWhenSending($args, 'encrypt_error_efail');
       }
 
@@ -212,7 +213,7 @@
 
           // Checks if recipient is not a sender (otherwise redundant certificates)
           foreach($this->settings->identities as $identity){
-            if($identity == $recipient){
+            if($identity['email'] == $recipient){
               $notInclude = true;
             }
           }

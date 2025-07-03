@@ -497,15 +497,15 @@ class slime_cryptoEngine {
             if($success){
 
                 $decryptedContent = $outputFile->getContent();
+                $preferences = $this->slime->settings->getSettings();
 
-                // Rendering decrypted HTML content is forbidded due to EFAIL
-                if($message->isHTMLMessage($decryptedContent)){
+                // Rendering decrypted HTML content is forbidded due to EFAIL by default
+                if($message->isHTMLMessage($decryptedContent) && !$preferences['slime_html_encryption']){
                     $messageInfo['status'] = slime_smime::MESSAGE_DECRYPTION_HTML;
                     break;
                 }
 
                 $messageInfo['status'] = slime_smime::MESSAGE_DECRYPTION_SUCCESSFULLY;
-                $preferences = $this->slime->settings->getSettings();
 
                 // If user doesn't want to show info about alg strength
                 if(!$preferences['slime_disable_weak']){

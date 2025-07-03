@@ -93,8 +93,9 @@ rcube_webmail.prototype.slime_save_options = function(){
         "_slime_encrypt_every" : $("#slimeencryptevery").prop('checked'),
         "_slime_import_signature" : $("#slimeimportsignature").prop('checked'),
         "_slime_import_all" : $("#slimeimportevery").prop('checked'),
-        "_slime_disable_weak" : $("#slimedisableweak").prop('checked'),
+        "_slime_html_encryption" : $("#slimehtmlencryption").prop('checked'),
         "_slime_trust_levels" : $("#slimetrustlevels").prop('checked'),
+        "_slime_disable_weak" : $("#slimedisableweak").prop('checked'),
         "_slime_encryption_algorithm" : $("#slime_encryption_algorithm").val(),
     };
     var lock = this.set_busy(true, 'loading');
@@ -138,7 +139,7 @@ rcube_webmail.prototype.slime_open_export = function(){
             {width: 500}
         );
     };
-    rcmail.slime_export(item, "crt", null, $isOld, extension);
+    rcmail.slime_export(item, "crt", null, isOld, extension);
 }
 
 rcube_webmail.prototype.slime_export = function(item, typeOfExport, password = null, isOld, extension){

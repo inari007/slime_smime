@@ -62,7 +62,7 @@ $config['slime_weak_sym_algorithms'] = ['rc2_128', '3des'];
 
 // Any potential security obstructions are forbidden
 // 1. Warnings are presented as errors
-// 2. An option 'Disable weak cipher warnings' is removed 
+// 2. Options 'Enable HTML content encryption' and 'Disable weak cipher warnings' are removed 
 // 3. Disables unsafe symmetric algorithms as if $config['slime_disableUnsafeSymAlg'] = true;
 // 4. Forbids removal of AuthEnvelopedData algorithms as if $config['slime_disableAuthEnveloped'] = false;
 // 5. Makes AuthEnvelopedData mandatory (removes aes_xxx_cbc -> (EFAIL CBC vulnerability))

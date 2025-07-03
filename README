@@ -32,6 +32,7 @@ FUNCTIONALITY
 TODO
 ----
 
+- Encrypted responds should show message of the responder when composing
 - Certificate trust levels in certificate information
 - Be able to select different imported certificate for encrypting/signing 
 - Import/Export/Deletion of multiple certificates at the same time
