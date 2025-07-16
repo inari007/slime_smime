@@ -4,11 +4,13 @@
 /* Plugin settings */
 /*******************/
 
-// Disables plugin functionality
-// When set to true, plugin works normally
-// When set to false, plugin functions are not loaded to any user
+// Plugin functionality
+// When set to false, plugin functions are not loaded
 $config['slime_plugin_enabled'] = true;
 
+// Enable logging for debugging (Import/Export/Delete)
+// Logs into Roundcube root folder 'logs/slime_smime.txt'
+$config['slime_logging'] = false;
 
 /* Initial plugin settings */
 // Is is not recommended to change these properties after plugin has been initialized
@@ -20,7 +22,6 @@ $config['slime_plugin_enabled'] = true;
 
 // REQUIRED! Absolute path of certificate store for all users.
 // Must be writeable by PHP process
-// Must not not lead directly to the web server root folder (Roundcube doesn't like that)
 $config['slime_path_to_certs'] = '';
 
 // If string left empty, then the OpenSSL tries to use system store certificates

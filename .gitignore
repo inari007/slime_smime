@@ -1,0 +1,6 @@
+# Ignore specific files
+config.inc.php
+
+# Ignore a folder and its contents
+certificates/
+tmp/

@@ -5,7 +5,7 @@
  *
  * Plugin to provide security via S/MIME standard.
  *
- * @version 1.0
+ * @version 1.2
  * @author Zdenek Dobes
  * @license MIT
  * Copyright (c) 2025 Zdenek Dobes
@@ -69,12 +69,6 @@
 
     function init(){
       $this->rc = rcube::get_instance();
-
-      /*
-      $file = fopen("C:/wamp/www/roundcubemail-1.6.9/plugins/slime_smime/tmp/ee.txt", 'w');
-      fwrite($file, print_r($this->message->headers->structure, true));
-      fclose($file);
-      */
 
       $this->load_config('config.inc.php');
       $this->settings = new slime_settings($this);
@@ -709,4 +703,22 @@
 
       return $args;
     }
+
+    /**
+    * Logs into Roundcube root folder 'logs/slime_smime.txt'
+    *
+    * @param string $val String to be logged
+    */
+
+    function debug($val){
+        if($this->settings->isLoggingEnabled()){
+            rcube::write_log('slime_smime', $val);
+        }
+    }
   }
+
+  /*
+  $file = fopen("C:/wamp/www/roundcubemail-1.6.9/plugins/slime_smime/tmp/ee.txt", 'w');
+  fwrite($file, print_r($this->message->headers->structure, true));
+  fclose($file);
+  */
