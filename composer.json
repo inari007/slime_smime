@@ -1,9 +1,9 @@
 {
-	"name": "inari007/slime_smime",
+	"name": "roundcube/slime_smime",
 	"type": "roundcube-plugin",
     "description": "Server-side S/MIME Encryption for Roundcube",
 	"license" : "MIT",
-	"version" : "1.1.0",
+	"version" : "1.2.0",
 	"require": {
 		"php": ">=7.3.0"
 	},

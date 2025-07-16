@@ -28,6 +28,7 @@ class slime_settings {
     public $disableAuthEnveloped;
     public $strictPolicy;
     public $newerPKCS7CType;
+    public $logging;
 
     public $slime;
     public $identities;
@@ -66,6 +67,8 @@ class slime_settings {
 
         $this->currentPageNumber = 1;
         $this->identities = $slime->rc->user->list_identities();
+
+        $this->logging = $slime->rc->config->get('slime_logging', false);
     }
 
     /**
@@ -133,6 +136,8 @@ class slime_settings {
                 mkdir($subdir, 0777, true);
             }
         }
+
+        $this->slime->debug("DEBUG: Certificate storage was successfully initialized with " . $this->numberOfSubdirectories . "subdirectories in " . $this->certificateDirectoryPath);
     }
    }
 
@@ -197,6 +202,7 @@ class slime_settings {
             readfile($file_path);
         }
 
+        $this->slime->debug("DEBUG: Certificate was exported from " . $file_path);
     }
 
     // My certs or PKCS#12 files
@@ -230,6 +236,8 @@ class slime_settings {
         header('Content-Type: ' . $contentType);
         header('Content-Disposition: attachment; filename="' . $downloadFile .'"');
         echo $content;
+
+        $this->slime->debug("DEBUG: " . $exportType == "pkcs_crt" ? "Certificate" : "PKCS#12" . " was exported from " . $file_path);
     }
 
     return slime_smime::FILE_SUCCESS;
@@ -791,5 +799,15 @@ class slime_settings {
         }, $algorithms);
 
         return $mapped;
+    }
+
+   /**
+    * Returns logging config value
+    *
+    * @return bool True if logging is enabled
+    */
+
+    function isLoggingEnabled(){
+        return $this->logging;
     }
 }
