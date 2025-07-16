@@ -137,6 +137,7 @@ class slime_settings {
             }
         }
 
+        // Optional logging
         $this->slime->debug("DEBUG: Certificate storage was successfully initialized with " . $this->numberOfSubdirectories . "subdirectories in " . $this->certificateDirectoryPath);
     }
    }
@@ -202,6 +203,7 @@ class slime_settings {
             readfile($file_path);
         }
 
+        // Optional logging
         $this->slime->debug("DEBUG: Certificate was exported from " . $file_path);
     }
 
@@ -237,6 +239,7 @@ class slime_settings {
         header('Content-Disposition: attachment; filename="' . $downloadFile .'"');
         echo $content;
 
+        // Optional logging
         $this->slime->debug("DEBUG: " . $exportType == "pkcs_crt" ? "Certificate" : "PKCS#12" . " was exported from " . $file_path);
     }
 

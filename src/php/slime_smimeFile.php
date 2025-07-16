@@ -238,7 +238,8 @@ class slime_smimeFile{
                 // Checks if current one is not the same as the one importing
                 if($cert['serialNumber'] == $curCert['serialNumber'] && $cert['issuer']['CN'] == $curCert['issuer']['CN']){
                     $file = $certPath . '/' . $codedUsername . '.p12';
-                    
+
+                    // Optional logging
                     $this->slime->debug("DEBUG: Imported PKCS#12 is already currently used in " . $curPKCSPath);
                 }
     
@@ -248,6 +249,7 @@ class slime_smimeFile{
                     $file = $certPath . '/' . $codedUsername . '.p12';
                     rename($file, $oldPKCSPath . '/' . $newFileName);
 
+                    // Optional logging
                     $this->slime->debug("DEBUG: Current PKCS#12 was moved to old_pkcs/ and imported PKCS#12 was created in " . $curPKCSPath);
                 }
     
@@ -256,6 +258,7 @@ class slime_smimeFile{
                     $newFileName = $this->generateOldPKCSName($cert, $codedUsername);
                     $file = $oldPKCSPath . '/' . $newFileName;
 
+                    // Optional logging
                     $this->slime->debug("DEBUG: Imported PKCS#12 was created in " . $file);
                 }
             }
@@ -270,6 +273,7 @@ class slime_smimeFile{
             $allCerts = implode("\r\n\r\n", $extracerts);
             file_put_contents($this->filePath, $allCerts);
 
+            // Optional logging
             $this->slime->debug("DEBUG: Imported certificate from digital signature was created in " . $this->filePath);
         }
         
@@ -280,6 +284,7 @@ class slime_smimeFile{
             $allCerts = implode("\r\n\r\n", $extracerts);
             file_put_contents($file, $allCerts);
 
+            // Optional logging
             $this->slime->debug("DEBUG: Imported certificate was created in " . $file);
         }
 
@@ -440,6 +445,7 @@ class slime_smimeFile{
         // Catching errors
         if(!$stdout){
 
+            // Optional logging
             $this->slime->debug("ERROR: Certificate path validation: " . var_export($stdout, true));
 
             // Normalizes EOL and separate lines
@@ -639,6 +645,7 @@ class slime_smimeFile{
     function deleteFile(){
         $out = unlink($this->filePath);
 
+        // Optional logging
         $this->slime->debug("DEBUG: " . $this->type == "application/x-pkcs12" ? "PKCS#12" : "Certificate" . " was deleted from " . $this->filePath);
 
         // Reorders file names in old_pkcs directory 
